@@ -55,7 +55,7 @@ d_desc = u·cosθd − e·sinθd·cos(αd) ...
 
 The exact coefficients depend on the LOS unit vectors stored in each file. This step is not implemented. Until it is, do not call the result subsidence.
 
-**Sign.** `LOS_SIGN = −1` in `config.py` is a convention, not a verified fact for this product. Check JPL D-102272 or a site with known motion.
+**Sign.** `LOS_SIGN = −1` in `config.py` (positive = toward the satellite) matches MintPy, whose NISAR reader (`prep_nisar.py`) loads `unwrappedPhase` without a sign change and converts with −λ/4π. That is consistency with a widely used tool, not a ground check. Confirm on a site with known motion (GNSS).
 
 **Other.** Unwrapping errors (whole-cycle jumps), decorrelation over paddy fields and water, relative referencing that hides basin-wide motion, provisional product quality, no ground truth from 2026.
 

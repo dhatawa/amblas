@@ -85,7 +85,7 @@ Backup: the app runs offline from `python -m http.server`. Keep screenshots of e
 Yes, that is our reading too. The stack of a connected chain equals the last pass minus the first, so the water vapour of 19 June and 25 July stays in it, and vapour delay scales with height. That is why the app attaches this note to every value and claims no subsidence. The fix is a tropospheric correction from a weather model, or fitting phase against elevation, plus more pairs.
 
 **Why are all four values positive if these areas are known to sink?**
-Either the atmosphere above (it lifts the whole basin floor together), or our phase sign convention is reversed. We flagged the convention as unverified from the start; checking it against a GPS site is the first test.
+Most likely the atmosphere: a vapour difference between the two end dates shifts the whole basin floor together. We also checked our sign against MintPy, the standard open InSAR toolbox: it reads NISAR phase the same way and uses the same convention, so a reversed sign is less likely. It is still not checked against GPS.
 
 **You only used 3 of 9 pairs. Why?**
 Download size: each granule is about 2.2 GB. The remaining six pairs of track 082 are listed in the app and the pipeline takes them without changes.

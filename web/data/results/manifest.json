@@ -4,7 +4,7 @@
  "label": "Experimental NISAR InSAR result - preliminary LOS displacement indicator",
  "quantity": "Relative line-of-sight displacement over the observation window",
  "units": "mm",
- "sign": "negative = away from the satellite, positive = toward the satellite (sign convention not yet verified against the product spec)",
+ "sign": "negative = away from the satellite, positive = toward the satellite (convention matches MintPy; not checked against GNSS)",
  "reference": "median of all valid pixels in the AOI",
  "track": "082",
  "direction": "ascending",

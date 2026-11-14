@@ -18,7 +18,7 @@ Live app: https://dhatawa.github.io/amblas/
 | Real NISAR granules processed for Bandung | **Done, experimental.** Track 082, 3 pairs, 19 Jun to 25 Jul 2026 (36 days). Wavelength read from the files: 24.2 cm. 86% of pixels valid. Granules downloaded by hand from ASF; `fetch.py` has still never touched the live archive. |
 | What the result shows | **Atmosphere, not yet ground motion.** The pattern follows topography (basin floor toward the satellite, mountains away), the signature of tropospheric delay. All four focus areas fall within or at the edge of the noise estimate. No subsidence is claimed. |
 | Web app | **Done.** Live on GitHub Pages; shows the result with its analyst note. |
-| Phase sign convention | **Unverified.** All four focus areas share one sign, which a reversed convention could also explain. See `pipeline/amblas/config.py`. |
+| Phase sign convention | **Consistent with MintPy, not yet checked on the ground.** MintPy's NISAR reader uses the phase as delivered with −λ/4π, positive = toward the satellite, the same as AMBLAS. A GNSS comparison is still needed. |
 
 ## Quick start
 

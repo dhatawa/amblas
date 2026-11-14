@@ -59,7 +59,7 @@ export function overview(s) {
   <li><span class="tag done">DONE</span><span>Processing pipeline written and tested on synthetic files with a known answer.</span></li>
   <li><span class="tag ${done ? "done" : "wait"}">${done ? "DONE" : "PENDING"}</span><span>Real NISAR granules processed for the basin. ${done ? `Track ${esc(s.manifest.track)}, ${s.manifest.pairs_used.length} pairs.` : "Needs an Earthdata Login and about 20 GB of downloads per track, or cloud subsetting."}</span></li>
   <li><span class="tag ${done ? "wait" : "plan"}">${done ? "CAUTION" : "NEXT"}</span><span>${done ? "First result reviewed: the pattern follows topography, which points to tropospheric delay rather than ground motion. No subsidence is claimed yet." : "Review the first real result for atmospheric artefacts before reading any value."}</span></li>
-  <li><span class="tag plan">NEXT</span><span>Correct the troposphere and confirm the phase sign convention against the NISAR product specification.</span></li>
+  <li><span class="tag plan">NEXT</span><span>Correct the troposphere (weather model, or a fit of phase against elevation) and check the sign on a GNSS station. The sign already matches MintPy's NISAR reader.</span></li>
   <li><span class="tag plan">NEXT</span><span>Combine ascending and descending tracks to separate vertical from east-west motion.</span></li>
   <li><span class="tag plan">NEXT</span><span>Compare against ground measurements (GPS, levelling, monitoring wells).</span></li>
 </ul>
@@ -198,7 +198,7 @@ export function limits() {
 <div class="card"><h3>The atmosphere is not removed</h3><p>Tropospheric delay can reach centimetres over a humid mountain basin. Values under ${NOISE_FLOOR_MM} mm are treated as noise. The threshold is a working choice.</p></div>
 <div class="card"><h3>Everything is relative</h3><p>Values are relative to the median of the valid pixels in the search box. If much of the basin moves together, that shared motion is hidden.</p></div>
 <div class="card"><h3>Provisional data</h3><p>NASA labels these products provisional: calibrated, partially validated, with processing still improving.</p></div>
-<div class="card"><h3>Sign convention unverified</h3><p>Whether negative means away from the satellite has been set by convention in the code and still has to be confirmed in the product specification.</p></div>
+<div class="card"><h3>Sign checked only against software</h3><p>AMBLAS uses the same convention as MintPy's NISAR reader (positive = toward the satellite). No ground station has confirmed it yet.</p></div>
 <div class="card"><h3>Gaps in coverage</h3><p>Paddy fields, water and dense vegetation lose coherence and are left blank. Blank does not mean stable.</p></div>
 <div class="card"><h3>Unwrapping errors</h3><p>Phase unwrapping can jump by whole cycles of about 12 cm, especially across low-coherence gaps. The mask reduces this risk and cannot remove it.</p></div>
 <div class="card"><h3>No ground truth</h3><p>No GPS, levelling or well data from 2026 has been compared. Agreement with older maps is a consistency check, not validation.</p></div>

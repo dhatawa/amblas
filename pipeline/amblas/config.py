@@ -25,9 +25,10 @@ SAMPLE_RADIUS_M = 500   # radius used when summarising a named location
 #   d_LOS = LOS_SIGN * wavelength / (4*pi) * phase
 # With -1, a positive result means motion TOWARD the satellite and a negative
 # result means motion AWAY from it (which is what subsidence looks like).
-# This follows the common "phase grows with range" convention. It has NOT been
-# checked against a real NISAR granule: confirm it in the product spec
-# (JPL D-102272) or on a known deforming site before interpreting direction.
+# This matches MintPy, whose NISAR reader (prep_nisar.py) loads unwrappedPhase
+# without a sign change and uses -wavelength/(4*pi), positive = toward the
+# satellite. Checked against MintPy's code on 14 Nov 2026, not against GNSS:
+# confirm on a site with known motion before interpreting direction.
 LOS_SIGN = -1.0
 
 SPEED_OF_LIGHT = 299_792_458.0

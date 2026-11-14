@@ -64,7 +64,7 @@ def run(input_dir: Path, coh_min: float = config.COH_MIN, min_pairs: int = confi
         "quantity": "Relative line-of-sight displacement over the observation window",
         "units": "mm",
         "sign": "negative = away from the satellite, positive = toward the satellite"
-                + ("" if simulated else " (sign convention not yet verified against the product spec)"),
+                + ("" if simulated else " (convention matches MintPy; not checked against GNSS)"),
         "reference": "median of all valid pixels in the AOI",
         "track": info[5], "direction": "ascending" if info[6] == "A" else "descending", "frame": info[7],
         "polarisation": p0.pol,
