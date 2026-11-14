@@ -75,4 +75,14 @@ The exact coefficients depend on the LOS unit vectors stored in each file. This 
 - Inventory test: 34 granules, 9 pairs on tracks 082 and 090, coverage as stated above.
 - Web app opened in headless Chrome in the empty and simulated states: all seven sections, track filter, place and coordinate search, layer toggles, 390 px width, no script errors.
 - Real-file check (14 Nov 2026): a real GUNW granule from track 141 was opened. The reader located the unwrapped-interferogram group, a polarisation group containing `unwrappedPhase`, `xCoordinates`, `yCoordinates` and `projection`, then correctly reported that the frame does not overlap the Bandung AOI.
-- Not verified: reading `centerFrequency` and the phase, coherence, component and ionosphere layers from a real file; any live download through `fetch.py`; any granule over Bandung.
+- First Bandung run (14 Nov 2026): three track-082 pairs, 19 Jun to 25 Jul 2026. All layers read from the real files, including `centerFrequency` (wavelength 24.2 cm) and the ionospheric screen. Valid pixels 86%; 2nd to 98th percentile of the LOS change −57 to +34 mm; median pair-scatter uncertainty 19 mm.
+
+  | Location | LOS (mm) | ± (mm) | Valid pixels | Mean coherence |
+  |---|---|---|---|---|
+  | Gedebage | +7.7 | 9.2 | 91% | 0.59 |
+  | Rancaekek | +22.4 | 19.1 | 82% | 0.66 |
+  | Dayeuhkolot | +15.6 | 3.7 | 96% | 0.78 |
+  | Cimahi | +1.8 | 10.3 | 98% | 0.78 |
+
+  Reading: the map is dominated by a pattern that follows topography, blue (toward) over the basin floor and orange (away) over the surrounding volcanoes and highlands. Because the stack of an unbroken chain equals the last pass minus the first, this is most simply explained by a difference in tropospheric water vapour between 19 June and 25 July. A reversed sign convention would also make known subsidence areas look positive. Neither can be separated from ground motion with this data, so no subsidence is claimed. Next tests: correct the troposphere (weather model, or a fit of phase against elevation), add the remaining six track-082 pairs and the descending track 090, and check the sign on a site with independent GPS.
+- Not verified: any live download through `fetch.py`; the phase sign convention.

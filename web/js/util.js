@@ -26,6 +26,16 @@ export const NOISE_FLOOR_MM = 15;
 
 // Plain-language reading of one sampled location. Returns { headline, text }.
 export function interpret(manifest, sample) {
+  const r = interpretRaw(manifest, sample);
+  if (manifest.status !== "nisar" || !manifest.analyst_note || sample?.cumulative_mm == null) return r;
+  if (r.headline.startsWith("Signal above")) {
+    return { headline: "Above the noise estimate, likely atmospheric", text: `The value exceeds the working noise threshold here, but it should not be read as ground motion. Analyst note: ${manifest.analyst_note}` };
+  }
+  r.text += ` Analyst note for the whole result: ${manifest.analyst_note}`;
+  return r;
+}
+
+function interpretRaw(manifest, sample) {
   if (manifest.status === "none") return { headline: "Not processed yet", text: "No NISAR interferograms have been run through the AMBLAS pipeline, so there is no value to show for this place." };
   if (!sample || !sample.in_raster) return { headline: "Outside the processed raster", text: "This place is not covered by the processed frame." };
   if (sample.cumulative_mm == null) return { headline: "No reliable pixels", text: "Every pixel near this place failed the quality mask (low coherence or unreliable unwrapping). No value is reported." };

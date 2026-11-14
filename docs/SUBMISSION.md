@@ -1,6 +1,6 @@
 # AMBLAS: final submission text (state on the night of 14 November 2026)
 
-This is the **[B] version**: real NISAR granules over Bandung have **not** been processed. If that changes before the deadline, switch to the [A] lines in `PITCH.md` and update the status table in `README.md` first.
+This is the **[A] version**: three real NISAR pairs over Bandung (track 082, 19 Jun to 25 Jul 2026) have been processed. The result is dominated by atmosphere, and the text says so.
 
 Field names below follow the Space Apps project form as used in recent years. Check them against the 2026 form; paste each block into the matching field.
 
@@ -16,9 +16,9 @@ Dancing with the SARs
 - Live app: https://dhatawa.github.io/amblas/
 - Source code: https://github.com/dhatawa/amblas
 
-## High-level summary (about 120 words)
+## High-level summary (about 130 words)
 
-Parts of the Bandung Basin in Indonesia have been sinking for decades, according to published GPS and radar studies, yet that knowledge sits in journal papers residents rarely see. AMBLAS is an open web map and a reproducible Python pipeline that turns NASA-ISRO NISAR Level-2 unwrapped interferograms into relative line-of-sight ground-motion maps. We found 34 NISAR interferograms over the basin in NASA's catalogue; two tracks view our four focus areas from opposite sides. The pipeline masks unreliable pixels, removes the ionospheric phase screen, converts phase to millimetres and stacks consecutive 12-day pairs. It is verified on synthetic data with a known answer; the real Bandung granules are not yet processed, so the map deliberately shows no displacement rather than an invented one.
+Parts of the Bandung Basin in Indonesia have been sinking for decades, according to published GPS and radar studies, yet that knowledge sits in journal papers residents rarely see. AMBLAS is an open web map and a reproducible Python pipeline that turns NASA-ISRO NISAR Level-2 unwrapped interferograms into relative line-of-sight ground-motion maps. We found 34 NISAR interferograms over the basin and processed the first three real pairs (19 June to 25 July 2026). The pipeline works end to end on real data. The first map is dominated by a pattern that follows the mountains around the basin, the signature of atmospheric water vapour, so we claim no subsidence from it. AMBLAS shows that result, explains why, and states what must come next: atmospheric correction, more pairs and a second viewing direction.
 
 ## Project details
 
@@ -29,8 +29,9 @@ Parts of the Bandung Basin in Indonesia have been sinking for decades, according
 **Where it stands.**
 - Done: data inventory (34 granules, tracks 082 and 090 cover all four areas, 19 Jun to 18 Oct 2026).
 - Done: pipeline with 9 automated tests on synthetic data, including recovery of a known displacement patch.
-- Done: the file reader was checked on a real NISAR GUNW granule and found the interferogram group, coordinates and projection. That granule lay outside Bandung.
-- Not done: processing real granules over Bandung; ascending/descending decomposition into vertical motion; tropospheric correction; comparison with ground measurements.
+- Done: first real run, track 082, three 12-day pairs, 19 Jun to 25 Jul 2026. Wavelength 24.2 cm read from the files, ionospheric screen removed, 86% of pixels valid.
+- Finding: the line-of-sight change follows topography (basin floor toward the satellite, surrounding volcanoes away). All four focus areas sit within or at the edge of the noise estimate and share one sign. Tropospheric delay or a reversed sign convention explains this better than ground motion. No subsidence is claimed.
+- Not done: tropospheric correction; the other six track-082 pairs; the descending track 090 and decomposition into vertical motion; comparison with ground measurements.
 
 **What it does not claim.** It reports relative line-of-sight change, not vertical subsidence. Four months of data cannot give an annual rate. It attributes no cause and makes no forecast. Values under 15 mm are treated as noise because tropospheric delay is not corrected.
 
@@ -54,7 +55,7 @@ Parts of the Bandung Basin in Indonesia have been sinking for decades, according
 
 ## Use of AI (fill in honestly, edit before submitting)
 
-We used Claude (Anthropic) as a coding and writing assistant: to search NASA's catalogue and the literature, scaffold the Python pipeline and web app, write tests, and draft documentation and pitch text. The team [describe what you did yourselves: chose the problem and the challenge, reviewed the code, ran the pipeline locally, checked the real NISAR file, edited the text, ...]. Scientific claims were limited to what the cited abstracts and NASA documentation state. No AI-generated images or data are presented as observations; simulated test data is labelled as such in the app.
+We used Claude (Anthropic) as a coding and writing assistant: to search NASA's catalogue and the literature, scaffold the Python pipeline and web app, write tests, draft documentation and pitch text, and help read the first result. The team [describe what you did yourselves: chose the problem and the challenge, reviewed the code, downloaded the NISAR granules, ran the pipeline locally, edited the text, ...]. Scientific claims were limited to what the cited abstracts and NASA documentation state. No AI-generated images or data are presented as observations; simulated test data is labelled as such in the app.
 
 ## Tags
 SAR, InSAR, NISAR, land subsidence, Bandung, Indonesia, groundwater, open data, web map

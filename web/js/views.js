@@ -57,9 +57,9 @@ export function overview(s) {
 <ul class="steps">
   <li><span class="tag done">DONE</span><span>NISAR data located in NASA's catalogue: ${inv.granule_count} geocoded unwrapped interferograms (GUNW), checked ${esc(inv.retrieved)}.</span></li>
   <li><span class="tag done">DONE</span><span>Processing pipeline written and tested on synthetic files with a known answer.</span></li>
-  <li><span class="tag done">DONE</span><span>File reader checked on a real NISAR GUNW granule: interferogram group, coordinates and projection found. (That granule lies outside Bandung.)</span></li>
   <li><span class="tag ${done ? "done" : "wait"}">${done ? "DONE" : "PENDING"}</span><span>Real NISAR granules processed for the basin. ${done ? `Track ${esc(s.manifest.track)}, ${s.manifest.pairs_used.length} pairs.` : "Needs an Earthdata Login and about 20 GB of downloads per track, or cloud subsetting."}</span></li>
-  <li><span class="tag plan">NEXT</span><span>Confirm the phase sign convention against the NISAR product specification.</span></li>
+  <li><span class="tag ${done ? "wait" : "plan"}">${done ? "CAUTION" : "NEXT"}</span><span>${done ? "First result reviewed: the pattern follows topography, which points to tropospheric delay rather than ground motion. No subsidence is claimed yet." : "Review the first real result for atmospheric artefacts before reading any value."}</span></li>
+  <li><span class="tag plan">NEXT</span><span>Correct the troposphere and confirm the phase sign convention against the NISAR product specification.</span></li>
   <li><span class="tag plan">NEXT</span><span>Combine ascending and descending tracks to separate vertical from east-west motion.</span></li>
   <li><span class="tag plan">NEXT</span><span>Compare against ground measurements (GPS, levelling, monitoring wells).</span></li>
 </ul>

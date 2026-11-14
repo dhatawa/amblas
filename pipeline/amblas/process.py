@@ -23,7 +23,7 @@ def clear() -> None:
 
 
 def run(input_dir: Path, coh_min: float = config.COH_MIN, min_pairs: int = config.MIN_PAIRS,
-        limit_mm: float | None = None) -> dict:
+        limit_mm: float | None = None, note: str | None = None) -> dict:
     files = sorted(Path(input_dir).glob("NISAR_L2_*GUNW*.h5"))
     if not files:
         raise SystemExit(f"No GUNW .h5 files in {input_dir}")
@@ -81,6 +81,7 @@ def run(input_dir: Path, coh_min: float = config.COH_MIN, min_pairs: int = confi
         "downloads": ["los_cumulative_mm.tif", "los_sigma_mm.tif", "n_pairs.tif"],
         "locations": samples,
         "notes": sorted({n for p in pairs for n in p.notes}),
+        "analyst_note": note,
     }
     (config.RESULTS / "manifest.json").write_text(json.dumps(manifest, indent=1))
     return manifest

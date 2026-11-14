@@ -12,7 +12,7 @@ function status(m) {
   el.className = `status ${m.status}`;
   if (m.status === "none") el.innerHTML = `<b>NO RASTER PROCESSED</b><span>The map shows data availability and earlier research only. No displacement values are displayed.</span>`;
   else if (m.status === "simulated") el.innerHTML = `<b>SIMULATED DATA</b><span>The displacement layer is an artificial test pattern for checking the software. It is not a satellite measurement.</span>`;
-  else el.innerHTML = `<b>EXPERIMENTAL NISAR RESULT</b><span>Preliminary line-of-sight displacement indicator, track ${esc(m.track)}, ${fmtDate(m.first_date)} to ${fmtDate(m.last_date)}. Not validated. See Limitations.</span>`;
+  else el.innerHTML = `<b>EXPERIMENTAL NISAR RESULT</b><span>Preliminary line-of-sight displacement indicator, track ${esc(m.track)}, ${fmtDate(m.first_date)} to ${fmtDate(m.last_date)}. Not validated. See Limitations.${m.analyst_note ? ` <b>READ FIRST</b> ${esc(m.analyst_note)}` : ""}</span>`;
 }
 
 function route() {

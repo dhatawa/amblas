@@ -42,7 +42,7 @@ In July, NASA and ISRO opened the data from NISAR, a radar satellite that passes
 
 This is AMBLAS. We found thirty-four NISAR interferograms over the basin in NASA's catalogue. Two tracks cover Gedebage, Rancaekek, Dayeuhkolot and Cimahi from opposite sides. Our pipeline masks bad pixels, removes the ionosphere, converts radar phase to millimetres and stacks the pairs.
 
-**[A]** Here is the first result: [describe exactly what the map shows, including where it shows nothing].
+**[A]** Tonight we ran it on three real NISAR pairs over Bandung, nineteenth of June to twenty-fifth of July. It works end to end. And the first map taught us something: the colours follow the mountains, not the neighbourhoods. That is water vapour in the air between two dates, not the ground moving. So we are not claiming subsidence from thirty-six days of data, and the app tells you exactly why.
 **[B]** We have verified the pipeline on synthetic data with a known answer. We have not yet processed the real granules, so the map shows no displacement. We would rather show you an empty layer than an invented one.
 
 What we are proudest of is what the app refuses to say. It reports line-of-sight change, not subsidence. It tells you four months is too short for a yearly rate. It labels every limit.
@@ -57,7 +57,7 @@ Juli lalu NASA dan ISRO membuka data NISAR, satelit radar yang melintasi Bandung
 
 Ini AMBLAS. Kami menemukan tiga puluh empat interferogram NISAR di atas Cekungan Bandung dalam katalog NASA. Dua lintasan mencakup Gedebage, Rancaekek, Dayeuhkolot, dan Cimahi dari dua arah pandang. Pipeline kami membuang piksel yang tidak andal, mengoreksi ionosfer, mengubah fase radar menjadi milimeter, lalu menumpuk pasangan citranya.
 
-**[A]** Ini hasil pertamanya: [jelaskan persis apa yang terlihat di peta, termasuk bagian yang kosong].
+**[A]** Malam ini kami menjalankannya pada tiga pasangan NISAR asli di atas Bandung, 19 Juni sampai 25 Juli. Pipeline-nya berjalan dari awal sampai akhir. Dan peta pertamanya mengajari kami sesuatu: warnanya mengikuti pegunungan, bukan permukiman. Itu jejak uap air di atmosfer antara dua tanggal, bukan gerak tanah. Jadi kami tidak mengklaim penurunan tanah dari data 36 hari, dan aplikasi menjelaskan alasannya.
 **[B]** Pipeline sudah kami verifikasi dengan data sintetis yang jawabannya diketahui. Granule asli belum kami proses, jadi peta belum menampilkan displacement. Kami memilih menunjukkan layer kosong daripada angka karangan.
 
 Yang paling kami banggakan justru apa yang tidak diklaim aplikasi ini. Yang dilaporkan adalah perubahan searah pandang satelit, bukan penurunan tanah vertikal. Empat bulan data belum cukup untuk laju tahunan. Setiap keterbatasan ditulis terang.
@@ -80,6 +80,15 @@ Dari pengamatan radar di orbit, menuju kesadaran akan gerak tanah di sekitar kit
 Backup: the app runs offline from `python -m http.server`. Keep screenshots of each step on the laptop. If the venue network is down the basemap becomes a coordinate grid and everything else works.
 
 ## Likely judge questions
+
+**Your map is blue in the basin and orange on the mountains. Isn't that just atmosphere?**
+Yes, that is our reading too. The stack of a connected chain equals the last pass minus the first, so the water vapour of 19 June and 25 July stays in it, and vapour delay scales with height. That is why the app attaches this note to every value and claims no subsidence. The fix is a tropospheric correction from a weather model, or fitting phase against elevation, plus more pairs.
+
+**Why are all four values positive if these areas are known to sink?**
+Either the atmosphere above (it lifts the whole basin floor together), or our phase sign convention is reversed. We flagged the convention as unverified from the start; checking it against a GPS site is the first test.
+
+**You only used 3 of 9 pairs. Why?**
+Download size: each granule is about 2.2 GB. The remaining six pairs of track 082 are listed in the app and the pipeline takes them without changes.
 
 **Is four months enough?**
 Not for an annual rate, and we do not give one. It is enough to see fast-moving areas if historical rates still hold: ten centimetres a year would be about three centimetres in our window, above our noise threshold. Slower areas stay hidden.
