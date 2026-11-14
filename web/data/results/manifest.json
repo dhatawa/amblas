@@ -1,4 +1,110 @@
 {
- "status": "none",
- "message": "No displacement raster has been processed yet."
+ "status": "nisar",
+ "generated_utc": "2026-11-14 16:32",
+ "label": "Experimental NISAR InSAR result - preliminary LOS displacement indicator",
+ "quantity": "Relative line-of-sight displacement over the observation window",
+ "units": "mm",
+ "sign": "negative = away from the satellite, positive = toward the satellite (sign convention not yet verified against the product spec)",
+ "reference": "median of all valid pixels in the AOI",
+ "track": "082",
+ "direction": "ascending",
+ "frame": "174",
+ "polarisation": "HH",
+ "wavelength_cm": 24.2,
+ "first_date": "2026-06-19",
+ "last_date": "2026-07-25",
+ "span_days": 36,
+ "pairs_used": [
+  {
+   "ref": "2026-06-19",
+   "sec": "2026-07-01",
+   "days": 12
+  },
+  {
+   "ref": "2026-07-01",
+   "sec": "2026-07-13",
+   "days": 12
+  },
+  {
+   "ref": "2026-07-13",
+   "sec": "2026-07-25",
+   "days": 12
+  }
+ ],
+ "chain_connected": true,
+ "settings": {
+  "coherence_min": 0.3,
+  "min_pairs": 3,
+  "ionosphere_screen_removed": true,
+  "troposphere_correction": "none",
+  "sample_radius_m": 500
+ },
+ "stats": {
+  "valid_pixel_fraction": 0.857,
+  "p02_mm": -57.2,
+  "p98_mm": 34.1,
+  "median_sigma_mm": 19.24
+ },
+ "overlay": {
+  "file": "los_cumulative.png",
+  "bounds": [
+   [
+    -7.15456,
+    107.34713
+   ],
+   [
+    -6.746165,
+    107.952133
+   ]
+  ],
+  "colour_limit_mm": 60.0
+ },
+ "downloads": [
+  "los_cumulative_mm.tif",
+  "los_sigma_mm.tif",
+  "n_pairs.tif"
+ ],
+ "locations": {
+  "gedebage": {
+   "in_raster": true,
+   "pixels_in_circle": 123,
+   "valid_fraction": 0.911,
+   "cumulative_mm": 7.66,
+   "sigma_mm": 9.24,
+   "n_pairs": 3.0,
+   "mean_coherence": 0.59,
+   "spread_mm": 5.94
+  },
+  "rancaekek": {
+   "in_raster": true,
+   "pixels_in_circle": 122,
+   "valid_fraction": 0.82,
+   "cumulative_mm": 22.35,
+   "sigma_mm": 19.13,
+   "n_pairs": 3.0,
+   "mean_coherence": 0.66,
+   "spread_mm": 11.72
+  },
+  "dayeuhkolot": {
+   "in_raster": true,
+   "pixels_in_circle": 120,
+   "valid_fraction": 0.958,
+   "cumulative_mm": 15.58,
+   "sigma_mm": 3.65,
+   "n_pairs": 3.0,
+   "mean_coherence": 0.78,
+   "spread_mm": 3.33
+  },
+  "cimahi": {
+   "in_raster": true,
+   "pixels_in_circle": 121,
+   "valid_fraction": 0.983,
+   "cumulative_mm": 1.83,
+   "sigma_mm": 10.27,
+   "n_pairs": 3.0,
+   "mean_coherence": 0.78,
+   "spread_mm": 4.8
+  }
+ },
+ "notes": []
 }
