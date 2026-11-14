@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AMBLAS - Ground motion over the Bandung Basin from NISAR radar</title>
+<meta name="description" content="AMBLAS turns NASA-ISRO NISAR radar interferograms into an open map of ground motion over the Bandung Basin, Indonesia.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Crect width='40' height='40' rx='8' fill='%230a1626'/%3E%3Cpath d='M8 24a14 14 0 0 1 24 0M13 20a8.5 8.5 0 0 1 14 0' fill='none' stroke='%233fd0e0' stroke-width='3' stroke-linecap='round'/%3E%3Cpath d='M5 31c5-3 9-3 13 0s9 3 17-2' fill='none' stroke='%236fae7a' stroke-width='3' stroke-linecap='round'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="vendor/leaflet/leaflet.css">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<header class="top">
+  <a class="brand" href="#overview" aria-label="AMBLAS home">
+    <svg viewBox="0 0 40 40" width="34" height="34" aria-hidden="true">
+      <path d="M4 30c5-3 9-3 13 0s9 3 19-2" fill="none" stroke="#6fae7a" stroke-width="2.4" stroke-linecap="round"/>
+      <path d="M8 22a14 14 0 0 1 24 0M13 18a8.5 8.5 0 0 1 14 0" fill="none" stroke="#3fd0e0" stroke-width="2.2" stroke-linecap="round"/>
+      <circle cx="20" cy="9" r="2.6" fill="#3fd0e0"/>
+    </svg>
+    <span><b>AMBLAS</b><small>Bandung Basin ground motion</small></span>
+  </a>
+  <nav id="nav" aria-label="Sections">
+    <a href="#overview">Overview</a>
+    <a href="#map">Explore map</a>
+    <a href="#method">Methodology</a>
+    <a href="#data">Data sources</a>
+    <a href="#research">Research</a>
+    <a href="#limits">Limitations</a>
+    <a href="#about">About</a>
+  </nav>
+</header>
+
+<div id="status" class="status" role="status"></div>
+
+<main id="view" tabindex="-1"></main>
+
+<section id="mapview" hidden>
+  <div id="map" aria-label="Interactive map of the Bandung Basin"></div>
+  <div id="simmark" class="simmark" hidden>SIMULATED TEST PATTERN &middot; NOT A MEASUREMENT</div>
+  <aside class="controls" aria-label="Map layers">
+    <form id="search" role="search">
+      <input id="q" list="places" placeholder="Search place or lat, lon" aria-label="Search place or coordinates">
+      <datalist id="places"></datalist>
+      <button>Go</button>
+    </form>
+    <details id="layerbox" open><summary>Layers and legend</summary>
+    <fieldset>
+      <label><input type="checkbox" data-layer="raster" checked> LOS displacement <span id="rasterstate"></span></label>
+      <label class="sub">Opacity <input type="range" id="opacity" min="0" max="100" value="85" aria-label="Displacement layer opacity"></label>
+      <label><input type="checkbox" data-layer="spots" checked> Areas named in earlier research</label>
+      <label><input type="checkbox" data-layer="aoi" checked> Search area</label>
+      <label><input type="checkbox" data-layer="foot"> NISAR frame footprints</label>
+    </fieldset>
+    <div id="legend" class="legend"></div>
+    <p id="offline" class="offline" hidden>Basemap tiles unreachable. Showing a coordinate grid instead.</p>
+    </details>
+  </aside>
+  <aside id="panel" class="panel" aria-live="polite"></aside>
+</section>
+
+<footer>
+  <span>AMBLAS &middot; Team 404 Reika Not Found &middot; NASA Space Apps Challenge 2026, Bandung</span>
+  <span>Independent student project. Not affiliated with or endorsed by NASA or ISRO.</span>
+</footer>
+
+<script src="vendor/leaflet/leaflet.js"></script>
+<script type="module" src="js/main.js"></script>
+</body>
+</html>

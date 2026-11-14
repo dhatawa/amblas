@@ -1,0 +1,77 @@
+# AMBLAS methodology
+
+## 1. Data
+
+| Property | Value | Source |
+|---|---|---|
+| Product | NISAR L2 GUNW, collection `NISAR_L2_GUNW_PROVISIONAL_V1` | NASA CMR |
+| Content | Unwrapped phase and coherence at 80 m, connected components, ionospheric phase screen | NISAR Data User Guide |
+| Pairing | Nearest-neighbour pairs, 12 days (one 24-day pair per track) | Granule names |
+| Quality level | Provisional: calibrated, partially validated | Collection description |
+| Coverage of the basin | 4 track/frames, 34 granules, 19 Jun to 18 Oct 2026 | CMR query, 14 Nov 2026 |
+
+Tracks that contain all four focus areas:
+
+| Track | Direction | Frame | Pairs | Window | Chain |
+|---|---|---|---|---|---|
+| 082 | ascending | 174 | 9 | 19 Jun to 17 Oct 2026 | unbroken |
+| 090 | descending | 092 | 9 | 20 Jun to 18 Oct 2026 | unbroken |
+
+Tracks 010 and 018 only clip the western edge of the basin. Coverage was computed by testing each focus-area coordinate against the frame polygons returned by CMR.
+
+HDF5 paths used (as listed by CMR for this collection):
+
+```
+/science/LSAR/GUNW/grids/frequencyA/unwrappedInterferogram/HH/unwrappedPhase
+/science/LSAR/GUNW/grids/frequencyA/unwrappedInterferogram/HH/coherenceMagnitude
+/science/LSAR/GUNW/grids/frequencyA/unwrappedInterferogram/HH/connectedComponents
+/science/LSAR/GUNW/grids/frequencyA/unwrappedInterferogram/HH/ionospherePhaseScreen
+```
+
+`xCoordinates`, `yCoordinates`, `projection` and `centerFrequency` are located by name. Their position was not confirmed on a real file: run `python -m amblas inspect` first.
+
+## 2. Steps and the reason for each
+
+1. **Window.** Read only the pixels over the search box (107.35–107.95°E, 6.75–7.15°S).
+2. **Mask.** Keep a pixel when coherence ≥ 0.30, connected component ≠ 0 and the phase is finite. Coherence 0.30 is a common starting value, not a tuned one. Report it if you change it.
+3. **Ionosphere.** Subtract the ionospheric phase screen. The product documentation says the screen is supplied and not applied. L-band is far more sensitive to the ionosphere than C-band, especially near the equator.
+4. **Convert.** `d_LOS = −λ/(4π) · φ`. One full cycle equals λ/2, about 12 cm. λ comes from `centerFrequency` in each file. The code refuses to guess it.
+5. **Reference.** Subtract the median of the valid pixels. Interferograms carry an unknown constant, so all values are relative.
+6. **Stack.** `rate = Σd / ΣΔt` over the valid pairs of a pixel, at least three pairs required. Cumulative change = rate × window length. Uncertainty = standard error of the per-pair rates × window length.
+7. **Summarise.** Median within 500 m of each focus-area coordinate, with valid-pixel fraction and local spread.
+
+## 3. What limits the result
+
+**Troposphere.** Not corrected. For an unbroken chain the sum of pairs equals (last pass − first pass), so the delay of those two dates stays in the cumulative value in full. The stated uncertainty measures pair-to-pair scatter and does not capture this. The app therefore treats |d| < 15 mm as noise. Fifteen millimetres is a working threshold chosen from the general size of tropical water-vapour delay, not measured for this site.
+
+**Expected signal.** Published rates reach roughly 10 to 20 cm/yr at the fastest sites, which would be about 3 to 7 cm in four months if those rates still hold. Slower areas will sit inside the noise. A null result at a location is therefore not evidence of stability.
+
+**Geometry.** One track gives one line of sight. With ascending (082) and descending (090) results on a common grid and the incidence angles from the product metadata, vertical and east-west motion can be separated:
+
+```
+d_asc  = u·cosθa − e·sinθa·cos(αa) ...   (two equations, two unknowns: up u, east e)
+d_desc = u·cosθd − e·sinθd·cos(αd) ...
+```
+
+The exact coefficients depend on the LOS unit vectors stored in each file. This step is not implemented. Until it is, do not call the result subsidence.
+
+**Sign.** `LOS_SIGN = −1` in `config.py` is a convention, not a verified fact for this product. Check JPL D-102272 or a site with known motion.
+
+**Other.** Unwrapping errors (whole-cycle jumps), decorrelation over paddy fields and water, relative referencing that hides basin-wide motion, provisional product quality, no ground truth from 2026.
+
+## 4. Wording rules used in the app
+
+| Say | Do not say |
+|---|---|
+| preliminary LOS displacement indicator | subsidence rate |
+| experimental InSAR result | measured sinking |
+| spatial consistency with earlier studies | validated against earlier studies |
+| associated in the literature with groundwater extraction | caused by groundwater extraction |
+| supports monitoring and decisions | prevents floods |
+
+## 5. Verification done so far
+
+- Unit and end-to-end tests on synthetic files: the stack recovers a known −0.25 mm/day patch to within 0.5 mm, removes a constant ionosphere and an arbitrary offset, masks a low-coherence strip, and refuses to mix tracks.
+- Inventory test: 34 granules, 9 pairs on tracks 082 and 090, coverage as stated above.
+- Web app opened in headless Chrome in the empty and simulated states: all seven sections, track filter, place and coordinate search, layer toggles, 390 px width, no script errors.
+- Not verified: anything involving a real NISAR file or a live download. Basemap tiles could not be loaded in the test environment.

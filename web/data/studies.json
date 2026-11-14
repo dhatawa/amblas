@@ -1,0 +1,81 @@
+{
+ "checked": "2026-11-14",
+ "scope_note": "Entries marked 'abstract' were checked against the published abstract or publisher record only. Nobody on the team has read the full texts yet. Do that before quoting any figure to a jury.",
+ "studies": [
+  {
+   "id": "ge2014",
+   "authors": "Ge, L., Ng, A. H.-M., Li, X., Abidin, H. Z., Gumilar, I.",
+   "year": 2014,
+   "title": "Land subsidence characteristics of Bandung Basin as revealed by ENVISAT ASAR and ALOS PALSAR interferometry",
+   "venue": "Remote Sensing of Environment 154, 46-60",
+   "doi": "10.1016/j.rse.2014.08.004",
+   "area": "Bandung Basin",
+   "satellites": "ENVISAT ASAR (C-band), ALOS PALSAR (L-band)",
+   "period": "2002-2011",
+   "method": "Time-series InSAR, compared against GPS surveys (2002-2010)",
+   "reported": "Displacement identified at Cimahi, Dayeuh Kolot, Rancaekek, Solokan Jeruk and Gedebage. Rates across the basin range from -240 to +40 mm/yr. Subsidence was steady in many areas, with acceleration in south Bandung. About 20-23 mm/yr of subsidence per 1 m/yr of groundwater-level decline.",
+   "limitations": "Causes are described as expected (groundwater extraction, soil consolidation under surface loading), with 'some correlations' to groundwater levels, not a demonstrated causal model.",
+   "check": "abstract"
+  },
+  {
+   "id": "abidin2008",
+   "authors": "Abidin, H. Z., Andreas, H., Gamal, M., Wirakusumah, A. D., Darmawan, D., Deguchi, T., Maruyama, Y.",
+   "year": 2008,
+   "title": "Land subsidence characteristics of the Bandung Basin, Indonesia, as estimated from GPS and InSAR",
+   "venue": "Journal of Applied Geodesy 2(3)",
+   "doi": "10.1515/JAG.2008.019",
+   "area": "Bandung Basin",
+   "satellites": "GPS campaigns; InSAR (June 2006 - March 2007)",
+   "period": "2000-2005 (GPS)",
+   "method": "Five repeated GPS surveys plus InSAR",
+   "reported": "A few locations subsided by about 70 cm over the five years, at roughly 1-2 cm/month. InSAR showed a similar rate and detected significant subsidence in the textile-industry area.",
+   "limitations": "Statistical testing found no strong correlation between GPS-derived subsidence and registered groundwater extraction for February 2000 - July 2002.",
+   "check": "abstract"
+  },
+  {
+   "id": "du2018",
+   "authors": "Du, Z., Ge, L., Ng, A. H.-M., Zhu, Q., Yang, X., Li, L.",
+   "year": 2018,
+   "title": "Correlating the subsidence pattern and land use in Bandung, Indonesia with both Sentinel-1/2 and ALOS-2 satellite images",
+   "venue": "International Journal of Applied Earth Observation and Geoinformation 67, 54-68",
+   "doi": "10.1016/j.jag.2018.01.001",
+   "area": "Bandung",
+   "satellites": "Sentinel-1 (C-band), ALOS-2 (L-band)",
+   "period": "September 2014 - July 2017",
+   "method": "Time-series InSAR, the two sensors cross-validated",
+   "reported": "Six '10-cm subsidence zones' (A-F). Vertical motion dominates the line-of-sight signal. Industrial groundwater use is not always the dominant cause: subsidence reflects residential, industrial and agricultural activity combined.",
+   "limitations": "The dominant factor inside each zone could not be identified for lack of statistics such as groundwater use per square kilometre.",
+   "check": "abstract"
+  },
+  {
+   "id": "rygus2025",
+   "authors": "Rygus, M., Bianchi, M., Novellino, A., Hussain, E., Taufiq, A., Rusli, S. R., Sarah, D., Meisina, C.",
+   "year": 2025,
+   "title": "Permanent aquifer storage loss from long-term groundwater withdrawal: a case study of subsidence in Bandung (Indonesia)",
+   "venue": "Journal of Hydrology: Regional Studies 57, 102129",
+   "doi": "10.1016/j.ejrh.2024.102129",
+   "area": "Bandung groundwater basin",
+   "satellites": "InSAR-derived displacement used to calibrate the model",
+   "period": "Model period 1950-2020, projections to 2050",
+   "method": "3-D hydro-geomechanical groundwater model calibrated against InSAR",
+   "reported": "Peak simulated subsidence 16.4 cm/yr, maximum cumulative 6.9 m, permanent aquifer storage loss 7.2 km3. With continued industrial extraction: up to 5.6 m more subsidence by 2050.",
+   "limitations": "These are model results, not direct measurements. Historical pumping data are scarce and were estimated through the calibration.",
+   "check": "abstract"
+  },
+  {
+   "id": "chaussard2013",
+   "authors": "Chaussard, E., Amelung, F., Abidin, H., Hong, S.-H.",
+   "year": 2013,
+   "title": "Sinking cities in Indonesia: ALOS PALSAR detects rapid subsidence due to groundwater and gas extraction",
+   "venue": "Remote Sensing of Environment 128, 150-161",
+   "doi": "10.1016/j.rse.2012.10.015",
+   "area": "Nine Indonesian cities including Bandung",
+   "satellites": "ALOS PALSAR (L-band)",
+   "period": "2006-2009 (to confirm)",
+   "method": "Time-series InSAR",
+   "reported": "Regional survey that includes Bandung among rapidly subsiding cities.",
+   "limitations": "Regional scale. Later work argues it is too coarse for local management.",
+   "check": "title only; volume, pages, DOI and period entered from memory and still to be confirmed"
+  }
+ ]
+}

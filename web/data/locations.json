@@ -1,0 +1,42 @@
+{
+ "coordinate_note": "Coordinates are approximate centres of the named districts, placed for navigation. They are not the measurement points of any study.",
+ "locations": [
+  {
+   "id": "gedebage",
+   "name": "Gedebage",
+   "admin": "Kota Bandung",
+   "lat": -6.950,
+   "lon": 107.700,
+   "reported_in": ["ge2014"],
+   "literature": "Named among the locations experiencing land displacement in the 2002-2011 InSAR analysis (ENVISAT ASAR + ALOS PALSAR)."
+  },
+  {
+   "id": "rancaekek",
+   "name": "Rancaekek",
+   "admin": "Kabupaten Bandung",
+   "lat": -6.965,
+   "lon": 107.765,
+   "reported_in": ["ge2014"],
+   "literature": "Named among the locations experiencing land displacement in the 2002-2011 InSAR analysis (ENVISAT ASAR + ALOS PALSAR)."
+  },
+  {
+   "id": "dayeuhkolot",
+   "name": "Dayeuhkolot",
+   "admin": "Kabupaten Bandung",
+   "lat": -6.988,
+   "lon": 107.626,
+   "reported_in": ["ge2014"],
+   "literature": "Named (as Dayeuh Kolot) among the locations experiencing land displacement in the 2002-2011 InSAR analysis (ENVISAT ASAR + ALOS PALSAR)."
+  },
+  {
+   "id": "cimahi",
+   "name": "Cimahi",
+   "admin": "Kota Cimahi",
+   "lat": -6.905,
+   "lon": 107.540,
+   "reported_in": ["ge2014"],
+   "literature": "Named among the locations experiencing land displacement in the 2002-2011 InSAR analysis (ENVISAT ASAR + ALOS PALSAR)."
+  }
+ ],
+ "shared_caveat": "The source abstract gives one basin-wide range (-240 to +40 mm/yr) and does not assign a rate to each location. AMBLAS therefore shows no per-location historical rate. Read the paper's maps before quoting a number for a district."
+}

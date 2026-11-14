@@ -1,0 +1,9 @@
+__pycache__/
+.pytest_cache/
+*.pyc
+.env
+.netrc
+data/gunw/
+data/simulated/
+web/data/results/*.tif
+web/data/results/*.png
