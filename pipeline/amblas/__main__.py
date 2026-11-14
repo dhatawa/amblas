@@ -22,6 +22,10 @@ def main() -> None:
     s = sub.add_parser("inspect", help="print the dataset tree of a GUNW file")
     s.add_argument("file", type=Path)
 
+    s = sub.add_parser("subset", help="crop local full GUNW granules to the basin window (small files for git)")
+    s.add_argument("--input", type=Path, required=True)
+    s.add_argument("--out", type=Path, required=True)
+
     s = sub.add_parser("process", help="stack a folder of GUNW files and publish to the web app")
     s.add_argument("--input", type=Path, required=True)
     s.add_argument("--coh-min", type=float, default=config.COH_MIN)
@@ -45,6 +49,22 @@ def main() -> None:
             print("saved", p)
     elif a.cmd == "inspect":
         print("\n".join(gunw.describe(a.file)))
+    elif a.cmd == "subset":
+        from .fetch import write_subset
+        a.out.mkdir(parents=True, exist_ok=True)
+        files = sorted(a.input.glob("NISAR_L2_*GUNW*.h5"))
+        if not files:
+            raise SystemExit(f"No GUNW .h5 files in {a.input}")
+        for f in files:
+            target = a.out / f.name
+            if target.exists():
+                print("skip (exists):", target.name)
+                continue
+            pair = gunw.read_pair(f)
+            write_subset(pair, target)
+            print(f"wrote {target.name}  {pair.phase.shape[0]}x{pair.phase.shape[1]} px  {target.stat().st_size / 1e6:.1f} MB")
+            for n in pair.notes:
+                print("  note:", n)
     elif a.cmd == "process":
         m = process.run(a.input, a.coh_min, a.min_pairs, a.limit_mm)
         print(m["label"])

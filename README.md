@@ -55,7 +55,11 @@ python -m amblas inventory
    ```bash
    python -m amblas inspect ../data/gunw/track_082/<file>.h5
    ```
-4. Process and publish to the app.
+4. Optional: crop the full granules to the basin so they can be committed (Git LFS).
+   ```bash
+   python -m amblas subset --input ../data/gunw/track_082 --out ../data/gunw_subset/track_082
+   ```
+5. Process and publish to the app.
    ```bash
    python -m amblas process --input ../data/gunw/track_082
    ```
@@ -85,6 +89,8 @@ There is no backend server. The pipeline writes files and the web app reads them
 | `pipeline/tests/` | End-to-end tests on synthetic data with a known answer. |
 | `data/inventory/` | CMR snapshot the inventory was built from. |
 | `web/` | The application. `web/data/` holds reference data and published results. |
+| `data/gunw_subset/` | Real NISAR pairs (track 082, 19 Jun to 25 Jul 2026) cropped to the basin, a few MB each, stored with Git LFS. Sources and checksums in its `README.md`. |
+| `data/gunw/` | Full granules, about 2.2 GB each. Not committed: GitHub rejects files over 2 GB. |
 | `data/simulated/` | Labelled synthetic GUNW files written by `amblas simulate` (not committed). |
 | `docs/` | `METHODOLOGY.md`: data, processing steps, limits. `PITCH.md`: submission text, pitch (EN/ID), demo script, judge Q&A, checklist. |
 
