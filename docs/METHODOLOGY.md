@@ -74,4 +74,5 @@ The exact coefficients depend on the LOS unit vectors stored in each file. This 
 - Unit and end-to-end tests on synthetic files: the stack recovers a known −0.25 mm/day patch to within 0.5 mm, removes a constant ionosphere and an arbitrary offset, masks a low-coherence strip, and refuses to mix tracks.
 - Inventory test: 34 granules, 9 pairs on tracks 082 and 090, coverage as stated above.
 - Web app opened in headless Chrome in the empty and simulated states: all seven sections, track filter, place and coordinate search, layer toggles, 390 px width, no script errors.
-- Not verified: anything involving a real NISAR file or a live download. Basemap tiles could not be loaded in the test environment.
+- Real-file check (14 Nov 2026): a real GUNW granule from track 141 was opened. The reader located the unwrapped-interferogram group, a polarisation group containing `unwrappedPhase`, `xCoordinates`, `yCoordinates` and `projection`, then correctly reported that the frame does not overlap the Bandung AOI.
+- Not verified: reading `centerFrequency` and the phase, coherence, component and ionosphere layers from a real file; any live download through `fetch.py`; any granule over Bandung.

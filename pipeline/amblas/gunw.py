@@ -68,6 +68,27 @@ def describe(path: str | Path) -> list[str]:
     return lines
 
 
+def footprint(path: str | Path, aoi: dict | None = None) -> dict:
+    """Lat/lon bounds of a GUNW file and whether it overlaps the AOI.
+
+    Cheap: reads only the coordinate vectors, never the rasters. Use it to
+    check a download before spending time on it.
+    """
+    aoi = aoi or config.AOI
+    with h5py.File(path, "r") as h5:
+        if config.GUNW_BASE not in h5:
+            raise KeyError(f"{config.GUNW_BASE} not found. Run 'inspect' to see the layout.")
+        base = h5[config.GUNW_BASE]
+        xds, yds, pds = _find(base, "xCoordinates"), _find(base, "yCoordinates"), _find(base, "projection")
+        if xds is None or yds is None or pds is None:
+            raise KeyError("xCoordinates / yCoordinates / projection not found")
+        x, y, epsg = xds[()], yds[()], _epsg(pds)
+    west, south, east, north = transform_bounds(f"EPSG:{epsg}", "EPSG:4326", float(x.min()), float(y.min()), float(x.max()), float(y.max()))
+    overlaps = west < aoi["east"] and east > aoi["west"] and south < aoi["north"] and north > aoi["south"]
+    return {"epsg": epsg, "west": round(west, 4), "south": round(south, 4), "east": round(east, 4),
+            "north": round(north, 4), "overlaps_aoi": overlaps}
+
+
 def read_pair(source, aoi: dict | None = None, name: str | None = None) -> Pair:
     """Read one interferometric pair, cropped to the AOI.
 

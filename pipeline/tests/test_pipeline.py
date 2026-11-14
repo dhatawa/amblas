@@ -83,6 +83,15 @@ def test_process_publishes_labelled_manifest(sim_dir, monkeypatch, tmp_path):
     json.dumps(m)   # must be serialisable
 
 
+def test_footprint_check(sim_dir):
+    from amblas.gunw import footprint
+    fp = footprint(sorted(sim_dir.glob("*.h5"))[0])
+    assert fp["overlaps_aoi"] and fp["epsg"] == 32748
+    assert fp["west"] < 107.35 and fp["east"] > 107.95
+    far = {"west": 120.0, "south": 0.0, "east": 121.0, "north": 1.0}
+    assert not footprint(sorted(sim_dir.glob("*.h5"))[0], far)["overlaps_aoi"]
+
+
 def test_mixed_tracks_are_refused(sim_dir, tmp_path, monkeypatch):
     monkeypatch.setattr(config, "RESULTS", tmp_path / "r")
     d = tmp_path / "mixed"

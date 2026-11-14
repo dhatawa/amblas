@@ -7,17 +7,18 @@ Team 404 Reika Not Found · NASA Space Apps Challenge 2026 (Bandung) · Challeng
 
 > Independent student project. Not affiliated with or endorsed by NASA or ISRO.
 
+Live app: https://dhatawa.github.io/amblas/
+
 ## Status on 14 November 2026
 
 | Part | State |
 |---|---|
 | NISAR data located | **Done.** 34 L2 GUNW granules over the basin, 19 Jun to 18 Oct 2026 (NASA CMR). |
-| Processing pipeline | **Done, tested on synthetic data only.** 8 automated tests pass. |
-| Real NISAR granules processed | **Not yet.** Needs an Earthdata Login. `fetch.py` has never touched the live archive. |
-| Web app | **Done.** Tested in headless Chrome in the no-data and simulated states, desktop and phone width. |
-| Phase sign convention | **Unverified.** See `pipeline/amblas/config.py`. |
-
-The app shows no displacement value until real data has been processed. That is intentional.
+| Processing pipeline | **Done.** 9 automated tests pass on synthetic data. |
+| Real NISAR granules processed for Bandung | **Done, experimental.** Track 082, 3 pairs, 19 Jun to 25 Jul 2026 (36 days). Wavelength read from the files: 24.2 cm. 86% of pixels valid. Granules downloaded by hand from ASF; `fetch.py` has still never touched the live archive. |
+| What the result shows | **Atmosphere, not yet ground motion.** The pattern follows topography (basin floor toward the satellite, mountains away), the signature of tropospheric delay. All four focus areas fall within or at the edge of the noise estimate. No subsidence is claimed. |
+| Web app | **Done.** Live on GitHub Pages; shows the result with its analyst note. |
+| Phase sign convention | **Unverified.** All four focus areas share one sign, which a reversed convention could also explain. See `pipeline/amblas/config.py`. |
 
 ## Quick start
 
@@ -51,10 +52,13 @@ python -m amblas inventory
    python -m amblas fetch --track 082                  # streams and keeps only the basin window
    python -m amblas fetch --track 082 --mode download  # alternative: full granules, about 2.2 GB each
    ```
-3. Confirm the file layout on the first granule before trusting anything.
+3. Check that every file covers Bandung, then confirm the layout on the first one.
    ```bash
-   python -m amblas inspect ../data/gunw/track_082/<file>.h5
+   python -m amblas check ../data/gunw/track_082/*.h5
+   python -m amblas inspect ../data/gunw/track_082/NISAR_L2_PR_GUNW_023_082_A_174_024_4000_SH_20260619T223102_20260619T223137_20260701T223102_20260701T223136_P05023_N_F_J_001.h5
    ```
+   On Windows PowerShell, `*.h5` is not expanded for you: pass the file names, or use
+   `python -m amblas check (Get-ChildItem ..\data\gunw\track_082\*.h5).FullName`.
 4. Optional: crop the full granules to the basin so they can be committed (Git LFS).
    ```bash
    python -m amblas subset --input ../data/gunw/track_082 --out ../data/gunw_subset/track_082
@@ -92,7 +96,7 @@ There is no backend server. The pipeline writes files and the web app reads them
 | `data/gunw_subset/` | Real NISAR pairs (track 082, 19 Jun to 25 Jul 2026) cropped to the basin, a few MB each, stored with Git LFS. Sources and checksums in its `README.md`. |
 | `data/gunw/` | Full granules, about 2.2 GB each. Not committed: GitHub rejects files over 2 GB. |
 | `data/simulated/` | Labelled synthetic GUNW files written by `amblas simulate` (not committed). |
-| `docs/` | `METHODOLOGY.md`: data, processing steps, limits. `PITCH.md`: submission text, pitch (EN/ID), demo script, judge Q&A, checklist. |
+| `docs/` | `SUBMISSION.md`: final text to paste into the Space Apps form. `METHODOLOGY.md`: data, processing steps, limits. `PITCH.md`: submission text, pitch (EN/ID), demo script, judge Q&A, checklist. |
 
 ## Dependencies
 

@@ -26,11 +26,15 @@ def main() -> None:
     s.add_argument("--input", type=Path, required=True)
     s.add_argument("--out", type=Path, required=True)
 
+    s = sub.add_parser("check", help="say whether GUNW files cover the Bandung AOI (reads coordinates only)")
+    s.add_argument("files", type=Path, nargs="+")
+
     s = sub.add_parser("process", help="stack a folder of GUNW files and publish to the web app")
     s.add_argument("--input", type=Path, required=True)
     s.add_argument("--coh-min", type=float, default=config.COH_MIN)
     s.add_argument("--min-pairs", type=int, default=config.MIN_PAIRS)
     s.add_argument("--limit-mm", type=float, default=None, help="colour scale limit; default: from the data")
+    s.add_argument("--note", default=None, help="analyst's reading of the result, shown in the app next to every value")
 
     s = sub.add_parser("simulate", help="write labelled synthetic files to test the chain")
     s.add_argument("--out", type=Path, default=config.ROOT / "data" / "simulated")
@@ -65,8 +69,16 @@ def main() -> None:
             print(f"wrote {target.name}  {pair.phase.shape[0]}x{pair.phase.shape[1]} px  {target.stat().st_size / 1e6:.1f} MB")
             for n in pair.notes:
                 print("  note:", n)
+    elif a.cmd == "check":
+        for f in a.files:
+            try:
+                fp = gunw.footprint(f)
+                verdict = "COVERS BANDUNG AOI" if fp["overlaps_aoi"] else "outside the AOI - not usable for the map"
+                print(f"{f.name}\n  lon {fp['west']}..{fp['east']}, lat {fp['south']}..{fp['north']}  ->  {verdict}")
+            except Exception as exc:  # report and continue with the next file
+                print(f"{f.name}\n  could not read: {exc}")
     elif a.cmd == "process":
-        m = process.run(a.input, a.coh_min, a.min_pairs, a.limit_mm)
+        m = process.run(a.input, a.coh_min, a.min_pairs, a.limit_mm, a.note)
         print(m["label"])
         print(f"track {m['track']} | {m['first_date']} -> {m['last_date']} | {len(m['pairs_used'])} pairs | valid {m['stats']['valid_pixel_fraction']:.0%}")
         for k, v in m["locations"].items():
