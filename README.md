@@ -9,16 +9,18 @@ Team 404 Reika Not Found · NASA Space Apps Challenge 2026 (Bandung) · Challeng
 
 Live app: https://dhatawa.github.io/amblas/
 
-## Status on 14 November 2026
+## Status on 15 November 2026
 
 | Part | State |
 |---|---|
 | NISAR data located | **Done.** 34 L2 GUNW granules over the basin, 19 Jun to 18 Oct 2026 (NASA CMR). |
-| Processing pipeline | **Done.** 9 automated tests pass on synthetic data. |
+| Processing pipeline | **Done.** 11 automated tests pass on synthetic data. |
 | Real NISAR granules processed for Bandung | **Done, experimental.** Track 082, 3 pairs, 19 Jun to 25 Jul 2026 (36 days). Wavelength read from the files: 24.2 cm. 86% of pixels valid. Granules downloaded by hand from ASF; `fetch.py` has still never touched the live archive. |
 | What the result shows | **Atmosphere first, no subsidence claim yet.** Uncorrected, the pattern followed topography (basin floor toward the satellite, mountains away). A per-pair phase-elevation fit (−6.7, −12.8, −41.1 mm/km, Copernicus GLO-30 DEM) removed it. What remains is a broad north-south gradient of about 25 mm, and all four focus areas sit within the noise: Gedebage −5.9 ± 8.0, Rancaekek +9.2 ± 16.1, Dayeuhkolot +2.0 ± 8.8, Cimahi −8.3 ± 13.4 mm. |
 | Web app | **Done.** Live on GitHub Pages; shows the result with its analyst note. |
 | Phase sign convention | **Consistent with MintPy, not yet checked on the ground.** MintPy's NISAR reader uses the phase as delivered with −λ/4π, positive = toward the satellite, the same as AMBLAS. A GNSS comparison is still needed. |
+
+The catalogue covers four months, but the map covers 36 days. Only pairs from one track and one viewing geometry can be stacked, so tracks 082 and 090 are processed separately. Track 082 has nine pairs; at about 2.2 GB per granule we downloaded and processed the first three before the submission deadline. The other six track-082 pairs and the descending track 090 are next. `amblas subset` crops each granule to the basin so the rest can be kept small.
 
 ## Quick start
 
@@ -112,11 +114,23 @@ ISCE3 and MintPy are not used. NASA already delivers unwrapped, geocoded interfe
 
 ## What AMBLAS does not claim
 
-It reports relative **line-of-sight** change, not vertical subsidence. It applies no tropospheric correction. Four months of data cannot give an annual rate. It attributes no cause and predicts nothing. Full list: the Limitations page in the app and `docs/METHODOLOGY.md`.
+It reports relative **line-of-sight** change, not vertical subsidence. Its tropospheric correction is partial: a per-pair phase-elevation fit removes the delay that follows terrain height, but turbulent and weather-driven delay that does not follow topography remains. The north-south gradient of about 25 mm is treated as that residual, not as ground motion, and no weather-model correction has been applied yet. Four months of data cannot give an annual rate, and the processed 36 days cannot either. It attributes no cause and predicts nothing. Full list: the Limitations page in the app and `docs/METHODOLOGY.md`.
 
 ## Data and references
 
-NISAR data courtesy of NASA and ISRO, distributed by the Alaska Satellite Facility DAAC. Basemap © OpenStreetMap contributors. Papers consulted are listed with DOIs in `web/data/studies.json` and on the Research page. They were checked at abstract level only.
+NISAR data courtesy of NASA and ISRO, distributed by the Alaska Satellite Facility DAAC. Elevation: Copernicus DEM GLO-30, © DLR e.V. 2010-2014 and © Airbus Defence and Space GmbH 2014-2018, provided under COPERNICUS by the European Union and ESA. Basemap: Esri World Dark Gray Canvas (Esri, HERE, Garmin, © OpenStreetMap contributors and the GIS user community), with OpenStreetMap tiles as fallback.
+
+Papers consulted are listed with DOIs in `web/data/studies.json` and on the Research page, each with the level at which it was checked. Chaussard et al. (2013) was checked against the author-hosted full text and its Crossref record (volume, pages, DOI); the figures the app quotes from it come from that full text. The other four (Abidin 2008, Ge 2014, Du 2018, Rygus 2025) were checked against the published abstract or publisher record; the app quotes only what those abstracts state.
+
+## Use of AI (Super Intelligence) tools
+
+This project was built with AI assistance, as allowed by the NASA Space Apps rules.
+
+- **Claude (Anthropic)** was used as a coding and writing assistant. It wrote most of the Python pipeline (`pipeline/amblas/`: HDF5 reading, masking, stacking, the elevation correction, raster output) and its tests, most of the web app (`web/`: map, panels, time-series chart, point values), the documentation in `docs/` and this README, and the scripts that recorded and assembled the demo video. It also searched NASA's catalogue and the literature, and took part in reading the first result. Commits made through Claude are authored `Claude <noreply@anthropic.com>` or carry a `Co-Authored-By: Claude` trailer.
+- **GitHub Copilot** is co-author of the first project commit and of the GitHub Pages deployment workflow (`Co-authored-by: Copilot` in the git history).
+- **The team** chose the challenge and the problem, downloaded the NISAR granules and the DEM, ran the pipeline on real data on our own machine, reviewed the code and results, recorded the demo voiceover, and edited the text.
+
+No AI-generated data is presented as an observation. The synthetic test data is produced by a deterministic script (`amblas simulate`) and is labelled as simulated wherever the app shows it. The voiceover in the submitted demo video is the team's own recorded voice.
 
 ## Licence
 
