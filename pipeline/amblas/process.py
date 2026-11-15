@@ -72,6 +72,12 @@ def run(input_dir: Path, coh_min: float = config.COH_MIN, min_pairs: int = confi
         layers["height_m"] = height
     samples = {loc["id"]: raster.sample_location(loc["lon"], loc["lat"], p0.x, p0.y, p0.epsg, layers, config.SAMPLE_RADIUS_M)
                for loc in locations}
+    if raw is not None:      # the same summary before the atmosphere correction
+        for loc in locations:
+            r = raster.sample_location(loc["lon"], loc["lat"], p0.x, p0.y, p0.epsg,
+                                       {"cumulative_mm": raw.cumulative_mm, "sigma_mm": raw.sigma_mm}, config.SAMPLE_RADIUS_M)
+            samples[loc["id"]]["cumulative_mm_raw"] = r.get("cumulative_mm")
+            samples[loc["id"]]["sigma_mm_raw"] = r.get("sigma_mm")
 
     # Time series: one map and one value per location for every acquisition date.
     epochs = []
@@ -86,6 +92,7 @@ def run(input_dir: Path, coh_min: float = config.COH_MIN, min_pairs: int = confi
     grid_layers = {"los": st.cumulative_mm, "sigma": st.sigma_mm}
     if raw is not None:
         grid_layers["los_raw"] = raw.cumulative_mm
+        grid_layers["sigma_raw"] = raw.sigma_mm
     if height is not None:
         grid_layers["height"] = height / 10.0     # stored in tenths, so this keeps metres within int16
     grid_meta = raster.write_grid(config.RESULTS / "grid.json", grid_layers, p0.x, p0.y, p0.epsg)

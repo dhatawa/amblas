@@ -2,6 +2,8 @@
 import { esc, fmtDate, interpret, NOISE_FLOOR_MM } from "./util.js";
 
 const fullTracks = (inv) => inv.tracks.filter((t) => t.covers.length === 4);
+const corrected = (m) => !!m?.settings?.troposphere_correction && m.settings.troposphere_correction !== "none";
+const coeffText = (m) => (m.settings.elevation_coeffs_mm_per_km || []).filter((c) => c != null).map((c) => (c > 0 ? "+" : "") + c).join(", ");
 
 const SVG_GEOMETRY = `<svg viewBox="0 0 320 150" role="img" aria-label="A satellite looks sideways at the ground along a slanted line of sight">
   <line x1="10" y1="128" x2="310" y2="128" stroke="#6fae7a" stroke-width="2"/>
@@ -42,11 +44,11 @@ function firstLook(m) {
   return `<section id="firstlook" class="firstlook">
   <div>
     <span class="q" style="color:var(--green);font-family:var(--mono);font-size:.74rem;letter-spacing:.1em">WHAT THE FIRST ${m.span_days} DAYS SHOW</span>
-    <h2>NISAR sees the basin clearly, and sees the air above it too</h2>
+    <h2>${corrected ? "First the air, then the ground: what NISAR shows so far" : "NISAR sees the basin clearly, and sees the air above it too"}</h2>
     <ol>
       <li><b>The data works here.</b> ${Math.round(m.stats.valid_pixel_fraction * 100)}% of the basin kept usable phase after masking, through tropical cloud and vegetation, from only ${m.pairs_used.length} twelve-day pairs.</li>
       ${corrected
-        ? `<li><b>The atmosphere is now modelled.</b> Each pair had its own phase-versus-elevation trend (${coeffs.map((c) => (c > 0 ? "+" : "") + c).join(", ")} mm per km of height), fitted away from the focus areas and removed. Switch between <i>uncorrected</i> and <i>corrected</i> on the map to see the difference.</li>`
+        ? `<li><b>The atmosphere is now modelled.</b> Each pair had its own phase-versus-elevation trend (${coeffs.map((c) => (c > 0 ? "+" : "") + c).join(", ")} mm per km of height), fitted away from the focus areas and removed. The mountain pattern disappears, and all four focus areas fall within the noise. Switch between <i>uncorrected</i> and <i>corrected</i> on the map to see the difference.</li>`
         : `<li><b>The loudest signal is the atmosphere.</b> The colours follow elevation: the basin floor reads toward the satellite and the volcanoes around it read away. Water vapour between two dates does exactly this. Spotting it is the first step every tropical InSAR study has to take before it can see the ground.</li>`}
       <li><b>Next: more time, a second angle.</b> NISAR has ${m.span_days < 100 ? "already recorded about three times as many days" : "recorded more"} over Bandung, and a descending track (090) that, combined with this one, separates vertical motion from sideways motion.</li>
     </ol>
@@ -83,8 +85,12 @@ ${done ? firstLook(m) : ""}
   <li><span class="tag done">DONE</span><span>NISAR data located in NASA's catalogue: ${inv.granule_count} geocoded unwrapped interferograms (GUNW), checked ${esc(inv.retrieved)}.</span></li>
   <li><span class="tag done">DONE</span><span>Processing pipeline written and tested on synthetic files with a known answer.</span></li>
   <li><span class="tag ${done ? "done" : "wait"}">${done ? "DONE" : "PENDING"}</span><span>Real NISAR granules processed for the basin. ${done ? `Track ${esc(s.manifest.track)}, ${s.manifest.pairs_used.length} pairs.` : "Needs an Earthdata Login and about 20 GB of downloads per track, or cloud subsetting."}</span></li>
-  <li><span class="tag ${done ? "wait" : "plan"}">${done ? "CAUTION" : "NEXT"}</span><span>${done ? "First result reviewed: the pattern follows topography, which points to tropospheric delay rather than ground motion. No subsidence is claimed yet." : "Review the first real result for atmospheric artefacts before reading any value."}</span></li>
-  <li><span class="tag plan">NEXT</span><span>Correct the troposphere (weather model, or a fit of phase against elevation) and check the sign on a GNSS station. The sign already matches MintPy's NISAR reader.</span></li>
+  ${!done ? `<li><span class="tag plan">NEXT</span><span>Review the first real result for atmospheric artefacts before reading any value.</span></li>`
+    : corrected(m) ? `<li><span class="tag done">DONE</span><span>Elevation-correlated troposphere removed pair by pair (${coeffText(m)} mm per km of height). The mountain pattern is gone; all four focus areas now sit within the noise.</span></li>
+  <li><span class="tag plan">NEXT</span><span>Remove the remaining broad north-south gradient (turbulent atmosphere or ionosphere left in the data), with a weather model or a fitted ramp, and check the sign on a GNSS station. The sign already matches MintPy's NISAR reader.</span></li>`
+    : `<li><span class="tag wait">CAUTION</span><span>First result reviewed: the pattern follows topography, which points to tropospheric delay rather than ground motion. No subsidence is claimed yet.</span></li>
+  <li><span class="tag plan">NEXT</span><span>Correct the troposphere (weather model, or a fit of phase against elevation) and check the sign on a GNSS station. The sign already matches MintPy's NISAR reader.</span></li>`}
+  ${done && m.span_days < (full[0]?.span_days ?? 0) ? `<li><span class="tag plan">NEXT</span><span>Process the remaining ${(full[0]?.span_days ?? 0) - m.span_days} days of track ${esc(m.track)} that NISAR has already recorded.</span></li>` : ""}
   <li><span class="tag plan">NEXT</span><span>Combine ascending and descending tracks to separate vertical from east-west motion.</span></li>
   <li><span class="tag plan">NEXT</span><span>Compare against ground measurements (GPS, levelling, monitoring wells).</span></li>
 </ul>
@@ -110,7 +116,8 @@ ${done ? firstLook(m) : ""}
 </div>`;
 }
 
-export function method() {
+export function method(s) {
+  const m = s.manifest, corr = corrected(m);
   return `
 <h1>Methodology</h1>
 <p>AMBLAS starts from NISAR Level-2 GUNW products: interferograms that NASA has already co-registered, flattened, unwrapped and geocoded. That removes the heaviest processing and lets a small team work reproducibly in plain Python.</p>
@@ -134,15 +141,16 @@ export function method() {
 <li><span class="tag done">4 CORRECT</span><span>Subtract the ionospheric phase screen, which the product supplies but does not apply.</span></li>
 <li><span class="tag done">5 CONVERT</span><span>Turn phase into millimetres along the line of sight.</span></li>
 <li><span class="tag done">6 REFERENCE</span><span>Subtract the median of all valid pixels. Every value then means "relative to the basin-wide median".</span></li>
-<li><span class="tag done">7 STACK</span><span>Average the rate across all pairs of one track, keep pixels with at least three valid pairs, scale to the full window.</span></li>
-<li><span class="tag done">8 PUBLISH</span><span>Write GeoTIFFs, a map overlay, per-location summaries and a manifest recording every setting.</span></li>
+<li><span class="tag done">7 TROPOSPHERE</span><span>Fit phase against elevation for each pair (a DEM resampled to the 80 m grid), leaving 3 km around the focus areas out of the fit, and subtract the trend. ${corr ? `Applied to the current result: ${coeffText(m)} mm per km.` : "Not applied to the current result."}</span></li>
+<li><span class="tag done">8 STACK</span><span>Average the rate across all pairs of one track, keep pixels with at least three valid pairs, scale to the full window.</span></li>
+<li><span class="tag done">9 PUBLISH</span><span>Write GeoTIFFs, a map for every acquisition date, per-location time series, a point-value grid and a manifest recording every setting.</span></li>
 </ul>
 <div class="formula">d_LOS [mm] = -( wavelength / 4&pi; ) &times; phase &times; 1000<br>rate = &Sigma; d_i / &Sigma; &Delta;t_i &nbsp;&nbsp; cumulative = rate &times; window length</div>
-<p>The wavelength is read from each file. The minus sign follows the common convention in which negative means motion away from the satellite. It has not been checked on a real NISAR granule yet.</p>
+<p>The wavelength is read from each file. The minus sign makes negative mean motion away from the satellite, the same convention MintPy uses for NISAR. It has been run on real NISAR granules but not yet checked against a GNSS station.</p>
 
 <h2>What the chain does not do</h2>
-<div class="note"><p><b>No tropospheric correction.</b> Water vapour delays the signal by amounts that can reach centimetres in the tropics. For a connected chain of pairs the sum collapses to the last pass minus the first, so the atmosphere of those two dates stays in the result. AMBLAS treats anything under ${NOISE_FLOOR_MM} mm as indistinguishable from noise. That threshold is a working choice, not a calibrated figure.</p></div>
-<p>The chain also performs no decomposition into vertical and horizontal motion, no correction for elevation-dependent delay and no check against ground instruments. Each is listed under <a href="#limits">Limitations</a>.</p>
+<div class="note"><p><b>${corr ? "Only part of the atmosphere is removed." : "No tropospheric correction in this result."}</b> ${corr ? "The elevation fit removes delay that grows with height. It cannot remove patchy, weather-driven delay that does not follow terrain." : "Run the pipeline with a DEM to remove delay that grows with height."} For a connected chain the sum collapses to the last pass minus the first, so whatever atmosphere is left on those two dates stays in the result. AMBLAS treats anything under ${NOISE_FLOOR_MM} mm, or under twice a value's own uncertainty (2&sigma;) when that is larger, as indistinguishable from noise. The ${NOISE_FLOOR_MM} mm floor is a working choice, not a calibrated figure.</p></div>
+<p>The chain also performs no weather-model correction, no decomposition into vertical and horizontal motion and no check against ground instruments. Each is listed under <a href="#limits">Limitations</a>.</p>
 
 <h2>Reading the map</h2>
 <p>Orange means the distance to the satellite grew, which is what sinking ground produces. Blue means it shrank. Pale tones are close to zero. Blank areas failed the quality mask. A single track sees the ground from one side only, so strong horizontal motion could also appear as colour.</p>`;
@@ -213,14 +221,15 @@ ${s.studies.studies.map((t) => `<div class="card"><span class="q">${t.year} &mid
 </div>`;
 }
 
-export function limits() {
+export function limits(s) {
+  const corr = corrected(s.manifest);
   return `
 <h1>Limitations and disclaimer</h1>
 <p>Read this page before quoting anything from AMBLAS.</p>
 <div class="grid">
 <div class="card"><h3>Line of sight is not vertical</h3><p>The radar measures change along a slanted view. Calling it subsidence assumes the motion is purely vertical. AMBLAS does not make that assumption and reports LOS only.</p></div>
 <div class="card"><h3>Four months is a short record</h3><p>The public NISAR record over Bandung starts on 19 June 2026. No annual rate can be derived responsibly from it. Results are labelled preliminary displacement indicators.</p></div>
-<div class="card"><h3>The atmosphere is not removed</h3><p>Tropospheric delay can reach centimetres over a humid mountain basin. Values under ${NOISE_FLOOR_MM} mm are treated as noise. The threshold is a working choice.</p></div>
+<div class="card"><h3>${corr ? "The atmosphere is only partly removed" : "The atmosphere is not removed"}</h3><p>${corr ? "The per-pair elevation fit takes out delay that follows terrain. Patchy, weather-driven delay remains and shows as a broad gradient across the basin." : "Tropospheric delay can reach centimetres over a humid mountain basin."} Values under ${NOISE_FLOOR_MM} mm, or under 2&sigma; when that is larger, are treated as noise. The ${NOISE_FLOOR_MM} mm floor is a working choice.</p></div>
 <div class="card"><h3>Everything is relative</h3><p>Values are relative to the median of the valid pixels in the search box. If much of the basin moves together, that shared motion is hidden.</p></div>
 <div class="card"><h3>Provisional data</h3><p>NASA labels these products provisional: calibrated, partially validated, with processing still improving.</p></div>
 <div class="card"><h3>Sign checked only against software</h3><p>AMBLAS uses the same convention as MintPy's NISAR reader (positive = toward the satellite). No ground station has confirmed it yet.</p></div>

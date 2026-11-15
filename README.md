@@ -16,7 +16,7 @@ Live app: https://dhatawa.github.io/amblas/
 | NISAR data located | **Done.** 34 L2 GUNW granules over the basin, 19 Jun to 18 Oct 2026 (NASA CMR). |
 | Processing pipeline | **Done.** 9 automated tests pass on synthetic data. |
 | Real NISAR granules processed for Bandung | **Done, experimental.** Track 082, 3 pairs, 19 Jun to 25 Jul 2026 (36 days). Wavelength read from the files: 24.2 cm. 86% of pixels valid. Granules downloaded by hand from ASF; `fetch.py` has still never touched the live archive. |
-| What the result shows | **Atmosphere, not yet ground motion.** The pattern follows topography (basin floor toward the satellite, mountains away), the signature of tropospheric delay. All four focus areas fall within or at the edge of the noise estimate. No subsidence is claimed. |
+| What the result shows | **Atmosphere first, no subsidence claim yet.** Uncorrected, the pattern followed topography (basin floor toward the satellite, mountains away). A per-pair phase-elevation fit (−6.7, −12.8, −41.1 mm/km, Copernicus GLO-30 DEM) removed it. What remains is a broad north-south gradient of about 25 mm, and all four focus areas sit within the noise: Gedebage −5.9 ± 8.0, Rancaekek +9.2 ± 16.1, Dayeuhkolot +2.0 ± 8.8, Cimahi −8.3 ± 13.4 mm. |
 | Web app | **Done.** Live on GitHub Pages; shows the result with its analyst note. |
 | Phase sign convention | **Consistent with MintPy, not yet checked on the ground.** MintPy's NISAR reader uses the phase as delivered with −λ/4π, positive = toward the satellite, the same as AMBLAS. A GNSS comparison is still needed. |
 

@@ -224,5 +224,5 @@
   }
  },
  "notes": [],
- "analyst_note": null
+ "analyst_note": "Each pair had its own phase-versus-elevation trend (-6.7, -12.8 and -41.1 mm per km of height), mostly from the last pass on 25 July. Removing it takes away the mountain pattern of the uncorrected map. What remains is a broad north-to-south gradient of about 25 mm that follows no known subsidence pattern and most likely comes from patchy atmosphere left in the data. All four focus areas sit within the noise. Thirty-six days are too short to see subsidence at the average rate published for Bandung (about 7 cm a year, so about 7 mm in this window)."
 }

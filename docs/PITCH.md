@@ -42,7 +42,7 @@ In July, NASA and ISRO opened the data from NISAR, a radar satellite that passes
 
 This is AMBLAS. We found thirty-four NISAR interferograms over the basin in NASA's catalogue. Two tracks cover Gedebage, Rancaekek, Dayeuhkolot and Cimahi from opposite sides. Our pipeline masks bad pixels, removes the ionosphere, converts radar phase to millimetres and stacks the pairs.
 
-**[A]** Tonight we ran it on three real NISAR pairs over Bandung, nineteenth of June to twenty-fifth of July. It works end to end. And the first map taught us something: the colours follow the mountains, not the neighbourhoods. That is water vapour in the air between two dates, not the ground moving. So we are not claiming subsidence from thirty-six days of data, and the app tells you exactly why.
+**[A]** Tonight we ran it on three real NISAR pairs over Bandung, nineteenth of June to twenty-fifth of July. It works end to end. And the first map taught us something: the colours follow the mountains, not the neighbourhoods. That is water vapour in the air between two dates, not the ground moving. So this morning we corrected it, pair by pair, against elevation. The mountains disappear, and what is left at our four districts is within a centimetre of zero. At Bandung's average rate, thirty-six days should give about seven millimetres, below what three pairs can resolve. Now we know what the next hundred days of NISAR data have to show.
 **[B]** We have verified the pipeline on synthetic data with a known answer. We have not yet processed the real granules, so the map shows no displacement. We would rather show you an empty layer than an invented one.
 
 What we are proudest of is what the app refuses to say. It reports line-of-sight change, not subsidence. It tells you four months is too short for a yearly rate. It labels every limit.
@@ -57,7 +57,7 @@ Juli lalu NASA dan ISRO membuka data NISAR, satelit radar yang melintasi Bandung
 
 Ini AMBLAS. Kami menemukan tiga puluh empat interferogram NISAR di atas Cekungan Bandung dalam katalog NASA. Dua lintasan mencakup Gedebage, Rancaekek, Dayeuhkolot, dan Cimahi dari dua arah pandang. Pipeline kami membuang piksel yang tidak andal, mengoreksi ionosfer, mengubah fase radar menjadi milimeter, lalu menumpuk pasangan citranya.
 
-**[A]** Malam ini kami menjalankannya pada tiga pasangan NISAR asli di atas Bandung, 19 Juni sampai 25 Juli. Pipeline-nya berjalan dari awal sampai akhir. Dan peta pertamanya mengajari kami sesuatu: warnanya mengikuti pegunungan, bukan permukiman. Itu jejak uap air di atmosfer antara dua tanggal, bukan gerak tanah. Jadi kami tidak mengklaim penurunan tanah dari data 36 hari, dan aplikasi menjelaskan alasannya.
+**[A]** Malam ini kami menjalankannya pada tiga pasangan NISAR asli di atas Bandung, 19 Juni sampai 25 Juli. Pipeline-nya berjalan dari awal sampai akhir. Dan peta pertamanya mengajari kami sesuatu: warnanya mengikuti pegunungan, bukan permukiman. Itu jejak uap air di atmosfer antara dua tanggal, bukan gerak tanah. Jadi pagi ini kami mengoreksinya per pasangan terhadap ketinggian. Pola pegunungannya hilang, dan yang tersisa di empat lokasi kami kurang dari satu sentimeter dari nol. Dengan laju rata-rata Bandung, 36 hari hanya menghasilkan sekitar tujuh milimeter, di bawah kemampuan tiga pasangan. Sekarang kami tahu persis apa yang harus diperlihatkan seratus hari data NISAR berikutnya.
 **[B]** Pipeline sudah kami verifikasi dengan data sintetis yang jawabannya diketahui. Granule asli belum kami proses, jadi peta belum menampilkan displacement. Kami memilih menunjukkan layer kosong daripada angka karangan.
 
 Yang paling kami banggakan justru apa yang tidak diklaim aplikasi ini. Yang dilaporkan adalah perubahan searah pandang satelit, bukan penurunan tanah vertikal. Empat bulan data belum cukup untuk laju tahunan. Setiap keterbatasan ditulis terang.
@@ -81,11 +81,14 @@ Backup: the app runs offline from `python -m http.server`. Keep screenshots of e
 
 ## Likely judge questions
 
-**Your map is blue in the basin and orange on the mountains. Isn't that just atmosphere?**
-Yes, that is our reading too. The stack of a connected chain equals the last pass minus the first, so the water vapour of 19 June and 25 July stays in it, and vapour delay scales with height. That is why the app attaches this note to every value and claims no subsidence. The fix is a tropospheric correction from a weather model, or fitting phase against elevation, plus more pairs.
+**Your uncorrected map is blue in the basin and orange on the mountains. Isn't that just atmosphere?**
+Yes, and we corrected it: a phase-versus-elevation fit for each pair, leaving 3 km around our focus areas out so we do not fit away real subsidence. The last pass, 25 July, carried most of it, −41 mm per km of height. The switch on the map shows before and after.
 
-**Why are all four values positive if these areas are known to sink?**
-Most likely the atmosphere: a vapour difference between the two end dates shifts the whole basin floor together. We also checked our sign against MintPy, the standard open InSAR toolbox: it reads NISAR phase the same way and uses the same convention, so a reversed sign is less likely. It is still not checked against GPS.
+**Why not move the reference point to stable rock on the rim?**
+A new reference subtracts one constant from the whole map. It cannot remove delay that grows with height, and rim rock sits hundreds of metres above the basin floor. The elevation fit addresses the cause.
+
+**After correction, nothing is above the noise. So what did you find?**
+That the first NISAR month over Bandung is dominated by the atmosphere, how large that effect is, and that it can be removed. At the published average rate, 7.2 cm a year, 36 days give about 7 mm, below what three pairs resolve. The remaining six pairs on track 082 more than triple the window.
 
 **You only used 3 of 9 pairs. Why?**
 Download size: each granule is about 2.2 GB. The remaining six pairs of track 082 are listed in the app and the pipeline takes them without changes.

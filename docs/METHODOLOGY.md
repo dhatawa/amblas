@@ -89,4 +89,14 @@ The exact coefficients depend on the LOS unit vectors stored in each file. This 
   | Cimahi | +1.8 | 10.3 | 98% | 0.78 |
 
   Reading: the map is dominated by a pattern that follows topography, blue (toward) over the basin floor and orange (away) over the surrounding volcanoes and highlands. Because the stack of an unbroken chain equals the last pass minus the first, this is most simply explained by a difference in tropospheric water vapour between 19 June and 25 July. A reversed sign convention would also make known subsidence areas look positive. Neither can be separated from ground motion with this data, so no subsidence is claimed. Next tests: correct the troposphere (weather model, or a fit of phase against elevation), add the remaining six track-082 pairs and the descending track 090, and check the sign on a site with independent GPS.
-- Not verified: any live download through `fetch.py`; the phase sign convention.
+- Corrected run (15 Nov 2026): same pairs, with the per-pair phase-elevation fit (Copernicus GLO-30 DEM, 3 km around the focus areas left out). Coefficients −6.7, −12.8 and −41.1 mm per km of height, so the pass of 25 July carried most of the delay.
+
+  | Location | LOS (mm) | ± (mm) | Elevation (m) | Series 1 Jul / 13 Jul / 25 Jul (mm) |
+  |---|---|---|---|---|
+  | Gedebage | −5.9 | 8.0 | 665 | −5.4 / −2.4 / −5.9 |
+  | Rancaekek | +9.2 | 16.1 | 671 | −7.0 / +2.6 / +9.2 |
+  | Dayeuhkolot | +2.0 | 8.8 | 662 | +4.7 / +6.8 / +2.0 |
+  | Cimahi | −8.3 | 13.4 | 715 | +5.3 / +1.5 / −8.3 |
+
+  Reading: the mountain pattern is gone and the shared positive bias with it; the four areas now have mixed signs, all within the noise, and their series wander by about ±7 mm with no trend. A broad north-south gradient of about 25 mm remains, which matches no published subsidence pattern and most likely comes from atmosphere that does not follow terrain. At the average Bandung rate reported by Chaussard et al. (2013), 7.2 cm/yr, 36 days would produce about 7 mm: below what this stack can resolve. The null result says the window is too short, not that the ground is stable.
+- Not verified: any live download through `fetch.py`; the phase sign against GNSS.

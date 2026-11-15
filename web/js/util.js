@@ -42,7 +42,11 @@ function interpretRaw(manifest, sample) {
   if (sample.cumulative_mm == null) return { headline: "No reliable pixels", text: "Every pixel near this place failed the quality mask (low coherence or unreliable unwrapping). No value is reported." };
   if (manifest.status === "simulated") return { headline: "Simulated value", text: "This number comes from an artificial test pattern used to check the software. It says nothing about the ground here." };
   const d = sample.cumulative_mm, limit = Math.max(NOISE_FLOOR_MM, 2 * (sample.sigma_mm || 0));
-  if (Math.abs(d) < limit) return { headline: "Within expected noise", text: `The value is smaller than ${limit.toFixed(0)} mm, the level below which atmospheric delay alone can explain it. No movement can be claimed from this stack.` };
+  const twoSig = 2 * (sample.sigma_mm || 0);
+  const why = twoSig > NOISE_FLOOR_MM
+    ? `${limit.toFixed(0)} mm, twice this value's own uncertainty (2\u03c3; the fixed noise floor of ${NOISE_FLOOR_MM} mm is lower here)`
+    : `${limit.toFixed(0)} mm, the noise floor below which atmospheric delay alone can explain it`;
+  if (Math.abs(d) < limit) return { headline: "Within expected noise", text: `The value is smaller than ${why}. No movement can be claimed from this stack.` };
   const dir = d < 0 ? "away from the satellite, the direction subsidence would produce" : "toward the satellite";
   return { headline: "Signal above the noise estimate", text: `The ground here appears to have moved ${dir}, relative to the reference area. This is a line-of-sight change over a short window, not a vertical rate, and the sign convention still needs checking against the product specification.` };
 }

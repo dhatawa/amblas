@@ -123,7 +123,8 @@ def test_series_and_grid_published(sim_dir, monkeypatch, tmp_path):
     assert m["overlay"]["raw_file"] == "los_cumulative_raw.png"
     g = json.loads((tmp_path / "results" / "grid.json").read_text())
     vals = np.frombuffer(base64.b64decode(g["layers"]["los"]), "<i2")
-    assert vals.size == g["rows"] * g["cols"] and set(g["layers"]) == {"los", "sigma", "los_raw", "height"}
+    assert vals.size == g["rows"] * g["cols"] and set(g["layers"]) == {"los", "sigma", "los_raw", "sigma_raw", "height"}
+    assert "cumulative_mm_raw" in m["locations"]["gedebage"]
     patch_val = simulate.PATCH_MM_PER_DAY * m["span_days"]
     assert vals[vals != -32768].min() * 0.1 < patch_val / 2       # the test patch survives in the grid
 

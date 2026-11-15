@@ -71,6 +71,7 @@ dl.kv dt { color: var(--mute); } dl.kv dd { margin: 0; overflow-wrap: anywhere; 
 #mapview { position: relative; flex: 1; min-height: calc(100vh - 150px); display: grid; grid-template-columns: 1fr 360px; }
 #mapview[hidden] { display: none; }
 #map { background: #0d1a29; min-height: 440px; z-index: 0; }
+.osm-dark { filter: invert(1) hue-rotate(190deg) brightness(.8) contrast(.95) saturate(.5); }
 .timebox { margin-top: .7rem; border-top: 1px solid var(--line); padding-top: .6rem; }
 .timebox .row { display: flex; gap: .5rem; align-items: center; }
 .timebox input { flex: 1; accent-color: var(--cyan); }

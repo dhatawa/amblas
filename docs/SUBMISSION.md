@@ -18,7 +18,7 @@ Dancing with the SARs
 
 ## High-level summary (about 130 words)
 
-Parts of the Bandung Basin in Indonesia have been sinking for decades, according to published GPS and radar studies, yet that knowledge sits in journal papers residents rarely see. AMBLAS is an open web map and a reproducible Python pipeline that turns NASA-ISRO NISAR Level-2 unwrapped interferograms into relative line-of-sight ground-motion maps. We found 34 NISAR interferograms over the basin and processed the first three real pairs (19 June to 25 July 2026). The pipeline works end to end on real data. The first map is dominated by a pattern that follows the mountains around the basin, the signature of atmospheric water vapour, so we claim no subsidence from it. AMBLAS shows that result, explains why, and states what must come next: atmospheric correction, more pairs and a second viewing direction.
+Parts of the Bandung Basin in Indonesia have been sinking for decades, according to published GPS and radar studies, yet that knowledge sits in journal papers residents rarely see. AMBLAS is an open web map and a reproducible Python pipeline that turns NASA-ISRO NISAR Level-2 unwrapped interferograms into relative line-of-sight ground-motion maps. We found 34 NISAR interferograms over the basin and processed the first three real pairs (19 June to 25 July 2026). The pipeline works end to end on real data. The first map followed the mountains around the basin, the signature of atmospheric water vapour. A per-pair elevation correction removed that pattern; what remains sits within the noise, so we claim no subsidence yet. The app lets you switch between both maps, play the change date by date and read the value at any point.
 
 ## Project details
 
@@ -30,10 +30,10 @@ Parts of the Bandung Basin in Indonesia have been sinking for decades, according
 - Done: data inventory (34 granules, tracks 082 and 090 cover all four areas, 19 Jun to 18 Oct 2026).
 - Done: pipeline with 9 automated tests on synthetic data, including recovery of a known displacement patch.
 - Done: first real run, track 082, three 12-day pairs, 19 Jun to 25 Jul 2026. Wavelength 24.2 cm read from the files, ionospheric screen removed, 86% of pixels valid.
-- Finding: the line-of-sight change follows topography (basin floor toward the satellite, surrounding volcanoes away). All four focus areas sit within or at the edge of the noise estimate and share one sign. Tropospheric delay or a reversed sign convention explains this better than ground motion. No subsidence is claimed.
-- Not done: tropospheric correction; the other six track-082 pairs; the descending track 090 and decomposition into vertical motion; comparison with ground measurements.
+- Finding: uncorrected, the line-of-sight change followed topography (basin floor toward the satellite, volcanoes away). A per-pair phase-elevation fit (−6.7, −12.8, −41.1 mm per km of height) removed that pattern. The four focus areas now read −5.9 to +9.2 mm, all within the noise. A broad north-south gradient of about 25 mm remains. No subsidence is claimed: at Bandung's published average rate, 36 days would give only about 7 mm.
+- Not done: weather-model correction of the remaining atmosphere; the other six track-082 pairs; the descending track 090 and decomposition into vertical motion; comparison with ground measurements.
 
-**What it does not claim.** It reports relative line-of-sight change, not vertical subsidence. Four months of data cannot give an annual rate. It attributes no cause and makes no forecast. Values under 15 mm are treated as noise because tropospheric delay is not corrected.
+**What it does not claim.** It reports relative line-of-sight change, not vertical subsidence. Four months of data cannot give an annual rate. It attributes no cause and makes no forecast. Values under 15 mm, or under twice their own uncertainty, are treated as noise because only the terrain-following part of the atmosphere is corrected.
 
 **Why it matters.** It points the newest open L-band radar data at a documented local problem and states every limit in plain language, so residents, researchers and local government can read the same map and know how far to trust it.
 
