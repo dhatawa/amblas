@@ -25,22 +25,47 @@ const SVG_PHASE = `<svg viewBox="0 0 320 150" role="img" aria-label="Two radar p
   <text x="8" y="138" fill="#9db0c2" font-size="11">(about 12 cm for L-band radar)</text>
 </svg>`;
 
-const SVG_LOS = `<svg viewBox="0 0 320 150" role="img" aria-label="Vertical sinking is only partly seen along the slanted line of sight">
+const SVG_LOS = `<svg viewBox="0 0 320 168" role="img" aria-label="Vertical sinking is only partly seen along the slanted line of sight">
   <line x1="20" y1="40" x2="300" y2="40" stroke="#6fae7a" stroke-width="2"/>
   <line x1="20" y1="110" x2="300" y2="110" stroke="#6fae7a" stroke-width="2" stroke-dasharray="4 4"/>
   <line x1="150" y1="40" x2="150" y2="110" stroke="#f2f6f9" stroke-width="2.5"/><text x="158" y="80" fill="#f2f6f9" font-size="11">true vertical drop</text>
   <line x1="150" y1="110" x2="96" y2="18" stroke="#3fd0e0" stroke-width="1.5" stroke-dasharray="5 4"/>
   <line x1="150" y1="110" x2="118" y2="56" stroke="#3fd0e0" stroke-width="3"/><text x="20" y="92" fill="#3fd0e0" font-size="11">what the radar</text><text x="20" y="105" fill="#3fd0e0" font-size="11">measures (LOS)</text>
-  <text x="20" y="140" fill="#9db0c2" font-size="11">Sideways motion also leaks into LOS: one track cannot separate them.</text>
+  <text x="20" y="140" fill="#9db0c2" font-size="11">Sideways motion also leaks into LOS:</text>
+  <text x="20" y="155" fill="#9db0c2" font-size="11">one track cannot separate the two.</text>
 </svg>`;
 
+function firstLook(m) {
+  const corrected = m.settings?.troposphere_correction && m.settings.troposphere_correction !== "none";
+  const coeffs = (m.settings?.elevation_coeffs_mm_per_km || []).filter((c) => c != null);
+  const img = `data/results/${m.overlay.file}?v=${encodeURIComponent(m.generated_utc)}`;
+  return `<section id="firstlook" class="firstlook">
+  <div>
+    <span class="q" style="color:var(--green);font-family:var(--mono);font-size:.74rem;letter-spacing:.1em">WHAT THE FIRST ${m.span_days} DAYS SHOW</span>
+    <h2>NISAR sees the basin clearly, and sees the air above it too</h2>
+    <ol>
+      <li><b>The data works here.</b> ${Math.round(m.stats.valid_pixel_fraction * 100)}% of the basin kept usable phase after masking, through tropical cloud and vegetation, from only ${m.pairs_used.length} twelve-day pairs.</li>
+      ${corrected
+        ? `<li><b>The atmosphere is now modelled.</b> Each pair had its own phase-versus-elevation trend (${coeffs.map((c) => (c > 0 ? "+" : "") + c).join(", ")} mm per km of height), fitted away from the focus areas and removed. Switch between <i>uncorrected</i> and <i>corrected</i> on the map to see the difference.</li>`
+        : `<li><b>The loudest signal is the atmosphere.</b> The colours follow elevation: the basin floor reads toward the satellite and the volcanoes around it read away. Water vapour between two dates does exactly this. Spotting it is the first step every tropical InSAR study has to take before it can see the ground.</li>`}
+      <li><b>Next: more time, a second angle.</b> NISAR has ${m.span_days < 100 ? "already recorded about three times as many days" : "recorded more"} over Bandung, and a descending track (090) that, combined with this one, separates vertical motion from sideways motion.</li>
+    </ol>
+    <a class="btn" href="#map">Explore the map</a><a class="btn ghost" href="#method">Method</a>
+  </div>
+  <img src="${img}" alt="Line-of-sight change over the Bandung Basin from NISAR track ${esc(m.track)}, ${esc(m.first_date)} to ${esc(m.last_date)}" loading="lazy">
+</section>`;
+}
+
 export function overview(s) {
-  const inv = s.inventory, full = fullTracks(inv), done = s.manifest.status === "nisar";
+  const inv = s.inventory, full = fullTracks(inv), m = s.manifest, done = m.status === "nisar";
   const span = full[0] ? `${fmtDate(full[0].first_date)} to ${fmtDate(full[0].last_date)}` : "";
+  const winCard = done
+    ? `<div><span class="num">${m.span_days} / ${full[0]?.span_days ?? "-"} d</span><span>processed so far: ${m.pairs_used.length} pairs on track ${esc(m.track)}, ${fmtDate(m.first_date)} to ${fmtDate(m.last_date)}. NISAR has recorded ${span}.</span></div>`
+    : `<div><span class="num">${full[0]?.span_days ?? "-"} d</span><span>observation window available, ${span}</span></div>`;
   return `
 <section class="hero">
   <div>
-    <span class="eyebrow">NASA Space Apps 2026 &middot; Dancing with the SARs</span>
+    <span class="eyebrow">Dancing with the SARs &middot; early NISAR explorer</span>
     <h1>Seeing the ground beneath Bandung, from orbit</h1>
     <p class="lead">Parts of the Bandung Basin have been sinking for decades, according to published GPS and radar studies. AMBLAS takes the newest open radar data from the NASA-ISRO NISAR satellite and turns it into a map anyone can read, with every limit stated.</p>
     <a class="btn" href="#map">Open the map</a><a class="btn ghost" href="#method">How it works</a>
@@ -48,11 +73,11 @@ export function overview(s) {
   <div class="facts">
     <div><span class="num">${inv.granule_count}</span><span>NISAR interferograms found over the basin</span></div>
     <div><span class="num">${full.length}</span><span>tracks covering all four focus areas (${full.map((t) => t.track + " " + t.direction).join(", ")})</span></div>
-    <div><span class="num">${full[0]?.span_days ?? "-"} d</span><span>observation window, ${span}</span></div>
+    ${winCard}
     <div><span class="num">80 m</span><span>pixel spacing of the unwrapped phase</span></div>
   </div>
 </section>
-
+${done ? firstLook(m) : ""}
 <h2>Where the project stands</h2>
 <ul class="steps">
   <li><span class="tag done">DONE</span><span>NISAR data located in NASA's catalogue: ${inv.granule_count} geocoded unwrapped interferograms (GUNW), checked ${esc(inv.retrieved)}.</span></li>

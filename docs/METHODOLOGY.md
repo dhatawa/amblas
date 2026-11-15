@@ -39,6 +39,10 @@ HDF5 paths used (as listed by CMR for this collection):
 5. **Reference.** Subtract the median of the valid pixels. Interferograms carry an unknown constant, so all values are relative.
 6. **Stack.** `rate = Σd / ΣΔt` over the valid pairs of a pixel, at least three pairs required. Cumulative change = rate × window length. Uncertainty = standard error of the per-pair rates × window length.
 7. **Summarise.** Median within 500 m of each focus-area coordinate, with valid-pixel fraction and local spread.
+8. **Troposphere (optional, needs a DEM).** For each pair, fit `d = a + b·h` against elevation and subtract it, then re-reference. The fit leaves out circles of 3 km around the four focus areas, because in Bandung the sinking ground is also the low ground: a fit that includes it would absorb real subsidence. Fitting per pair rather than on the stack matters, since each date has its own water-vapour profile. The coefficients (mm per km of height) are stored in the manifest.
+9. **Time series.** The running sum of the pairs gives one map and one value per location for every acquisition date. For an unbroken chain this equals the change since the first pass.
+
+Why not just move the reference point to stable rock on the basin rim? Changing the reference subtracts one constant from the whole map. It cannot remove a delay that grows with elevation, and rim rock sits hundreds of metres above the basin floor, where the delay differs most. A reference on the basin floor at the same height as the focus areas would cancel more of it, but no point there is known to be stable. The elevation fit addresses the cause directly.
 
 ## 3. What limits the result
 

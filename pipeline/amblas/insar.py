@@ -4,7 +4,7 @@ Each function does one thing so it can be tested on its own.
 """
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 import numpy as np
 
@@ -49,6 +49,26 @@ def reference(d: np.ndarray, ok: np.ndarray, ref_mask: np.ndarray | None = None)
     return d - np.nanmedian(d[sel])
 
 
+def remove_elevation_trend(d: np.ndarray, ok: np.ndarray, height_m: np.ndarray,
+                           exclude: np.ndarray | None = None) -> tuple[np.ndarray, float | None]:
+    """Fit d = a + b*h by least squares and remove it. Returns (corrected, b in mm/km).
+
+    This is the simplest correction for stratified tropospheric delay, which
+    grows with the thickness of air between ground and satellite and so tracks
+    elevation. The fit uses only pixels outside `exclude` (areas where real
+    deformation is expected), because in Bandung the sinking ground is also
+    the low ground: a fit that includes it would absorb part of the signal.
+    """
+    sel = ok & np.isfinite(height_m) & np.isfinite(d)
+    if exclude is not None:
+        sel &= ~exclude
+    if sel.sum() < 500 or np.ptp(height_m[sel]) < 200:
+        return d, None                                   # too few pixels or too little relief to fit
+    A = np.column_stack([np.ones(sel.sum()), height_m[sel] / 1000.0])
+    (a, b), *_ = np.linalg.lstsq(A, d[sel], rcond=None)
+    return d - (a + b * height_m / 1000.0), float(b)
+
+
 @dataclass
 class Stack:
     cumulative_mm: np.ndarray    # LOS change over the whole window, relative
@@ -59,14 +79,21 @@ class Stack:
     first_date: str
     last_date: str
     connected: bool
+    epoch_dates: list[str] = field(default_factory=list)
+    epochs_mm: list[np.ndarray] = field(default_factory=list)   # running sum of pairs, one map per date
+    elevation_coeffs: list[float | None] = field(default_factory=list)
 
 
 def stack_pairs(pairs: list[Pair], coh_min: float = config.COH_MIN, min_pairs: int = config.MIN_PAIRS,
-                ref_mask: np.ndarray | None = None, apply_iono: bool = True) -> Stack:
+                ref_mask: np.ndarray | None = None, apply_iono: bool = True,
+                height_m: np.ndarray | None = None, exclude: np.ndarray | None = None) -> Stack:
     """Average the rate of many short pairs, then scale to the full window.
 
     rate = sum(d_i) / sum(dt_i) over the valid pairs of each pixel.
     Pixels with fewer than `min_pairs` valid pairs are left empty (NaN).
+    With `height_m`, each pair is corrected for an elevation trend first.
+    Also returns the running sum of the pairs at each acquisition date
+    (a simple time series; exact only for an unbroken chain).
     """
     pairs = sorted(pairs, key=lambda p: p.ref_date)
     shape = pairs[0].phase.shape
@@ -80,11 +107,22 @@ def stack_pairs(pairs: list[Pair], coh_min: float = config.COH_MIN, min_pairs: i
     sum_r2 = np.zeros(shape, "float64")
     sum_c = np.zeros(shape, "float64")
     n = np.zeros(shape, "int16")
+    running = np.zeros(shape, "float64")
+    epochs = [np.zeros(shape, "float32")]
+    dates = [pairs[0].ref_date]
+    coeffs: list[float | None] = []
 
     for p in pairs:
         ok = valid_mask(p, coh_min)
         ph = remove_ionosphere(p) if apply_iono else p.phase
         d = reference(phase_to_los_mm(ph, p.wavelength_m), ok, ref_mask)
+        if height_m is not None:
+            d, b = remove_elevation_trend(d, ok, height_m, exclude)
+            d = reference(d, ok, ref_mask)
+            coeffs.append(None if b is None else round(b, 2))
+        running = running + np.where(ok, d, np.nan)       # a gap breaks the series from here on
+        epochs.append(running.astype("float32"))
+        dates.append(p.sec_date)
         d = np.where(ok, d, 0.0)
         rate = d / p.baseline_days
         sum_d += d
@@ -108,4 +146,5 @@ def stack_pairs(pairs: list[Pair], coh_min: float = config.COH_MIN, min_pairs: i
     return Stack(cumulative_mm=(rate * span).astype("float32"),
                  sigma_mm=np.where(enough, sem * span, np.nan).astype("float32"),
                  n_pairs=n, mean_coherence=mean_c.astype("float32"), span_days=span,
-                 first_date=pairs[0].ref_date, last_date=str(d1), connected=connected)
+                 first_date=pairs[0].ref_date, last_date=str(d1), connected=connected,
+                 epoch_dates=dates, epochs_mm=epochs, elevation_coeffs=coeffs)

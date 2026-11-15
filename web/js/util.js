@@ -28,10 +28,11 @@ export const NOISE_FLOOR_MM = 15;
 export function interpret(manifest, sample) {
   const r = interpretRaw(manifest, sample);
   if (manifest.status !== "nisar" || !manifest.analyst_note || sample?.cumulative_mm == null) return r;
+  r.note = manifest.analyst_note;
   if (r.headline.startsWith("Signal above")) {
-    return { headline: "Above the noise estimate, likely atmospheric", text: `The value exceeds the working noise threshold here, but it should not be read as ground motion. Analyst note: ${manifest.analyst_note}` };
+    r.headline = "Above the noise estimate, likely atmospheric";
+    r.text = "The value is larger than the working noise threshold, but across the whole basin the pattern follows elevation, so read it as air, not ground, until the troposphere is corrected.";
   }
-  r.text += ` Analyst note for the whole result: ${manifest.analyst_note}`;
   return r;
 }
 

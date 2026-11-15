@@ -51,7 +51,7 @@ Parts of the Bandung Basin in Indonesia have been sinking for decades, according
 - Abidin et al. 2008, Journal of Applied Geodesy 2(3). doi:10.1515/JAG.2008.019
 - Du et al. 2018, Int. J. Applied Earth Observation and Geoinformation 67, 54-68. doi:10.1016/j.jag.2018.01.001
 - Rygus et al. 2025, Journal of Hydrology: Regional Studies 57, 102129. doi:10.1016/j.ejrh.2024.102129
-- Chaussard et al. 2013, Remote Sensing of Environment 128, 150-161. doi:10.1016/j.rse.2012.10.015 (details still to be confirmed)
+- Chaussard et al. 2013, Remote Sensing of Environment 128, 150-161. doi:10.1016/j.rse.2012.10.015
 
 ## Use of AI (fill in honestly, edit before submitting)
 

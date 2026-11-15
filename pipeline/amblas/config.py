@@ -20,6 +20,7 @@ GUNW_BASE = "/science/LSAR/GUNW/grids/frequencyA/unwrappedInterferogram"
 COH_MIN = 0.30          # pixels below this coherence are discarded
 MIN_PAIRS = 3           # a pixel needs at least this many valid pairs
 SAMPLE_RADIUS_M = 500   # radius used when summarising a named location
+TREND_EXCLUDE_RADIUS_M = 3000   # focus areas left out of the elevation fit
 
 # Sign of the phase -> line-of-sight conversion.
 #   d_LOS = LOS_SIGN * wavelength / (4*pi) * phase

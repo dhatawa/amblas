@@ -12,11 +12,14 @@ function status(m) {
   el.className = `status ${m.status}`;
   if (m.status === "none") el.innerHTML = `<b>NO RASTER PROCESSED</b><span>The map shows data availability and earlier research only. No displacement values are displayed.</span>`;
   else if (m.status === "simulated") el.innerHTML = `<b>SIMULATED DATA</b><span>The displacement layer is an artificial test pattern for checking the software. It is not a satellite measurement.</span>`;
-  else el.innerHTML = `<b>EXPERIMENTAL NISAR RESULT</b><span>Preliminary line-of-sight displacement indicator, track ${esc(m.track)}, ${fmtDate(m.first_date)} to ${fmtDate(m.last_date)}. Not validated. See Limitations.${m.analyst_note ? ` <b>READ FIRST</b> ${esc(m.analyst_note)}` : ""}</span>`;
+  else {
+    const tropo = m.settings?.troposphere_correction && m.settings.troposphere_correction !== "none";
+    el.innerHTML = `<b>FIRST NISAR LOOK</b><span>Track ${esc(m.track)}, ${fmtDate(m.first_date)} to ${fmtDate(m.last_date)}: ${m.span_days} of the ${state.inventory.tracks.find((t) => t.track === m.track)?.span_days ?? "?"} days NISAR has recorded. ${tropo ? "Elevation-correlated atmosphere removed per pair." : "The strongest signal so far comes from the atmosphere, not the ground."} <a href="#overview/firstlook">What the first look shows</a> &middot; <a href="#limits">Limits</a></span>`;
+  }
 }
 
 function route() {
-  const id = location.hash.slice(1) || "overview";
+  const [id, anchor] = (location.hash.slice(1) || "overview").split("/");
   const isMap = id === "map";
   document.querySelectorAll("#nav a").forEach((a) => a.getAttribute("href") === `#${isMap ? "map" : pages[id] ? id : "overview"}` ? a.setAttribute("aria-current", "page") : a.removeAttribute("aria-current"));
   mapEl.hidden = !isMap;
@@ -24,11 +27,12 @@ function route() {
   if (isMap) {
     if (!mapReady) { mapview.init(state); mapReady = true; }
     mapview.refresh();
-    window.scrollTo(0, 0);
+    window.scrollTo({ top: 0, behavior: "instant" });
   } else {
     view.innerHTML = (pages[id] || pages.overview)(state);
     if (id === "data") wireFilter();
-    window.scrollTo(0, 0);
+    const target = anchor && document.getElementById(anchor);
+    target ? target.scrollIntoView({ behavior: "instant" }) : window.scrollTo({ top: 0, behavior: "instant" });
   }
 }
 
@@ -47,6 +51,7 @@ try {
     ["inventory", "locations", "studies", "footprints.geojson", "results/manifest"].map((n) => loadJSON(`data/${n}${n.includes(".") ? "" : ".json"}`)));
   state = { inventory, locations, studies, footprints, manifest };
   status(manifest);
+
   addEventListener("hashchange", route);
   route();
 } catch (err) {

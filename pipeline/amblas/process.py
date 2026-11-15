@@ -23,7 +23,8 @@ def clear() -> None:
 
 
 def run(input_dir: Path, coh_min: float = config.COH_MIN, min_pairs: int = config.MIN_PAIRS,
-        limit_mm: float | None = None, note: str | None = None) -> dict:
+        limit_mm: float | None = None, note: str | None = None, dem: list[Path] | None = None,
+        exclude_radius_m: float = config.TREND_EXCLUDE_RADIUS_M) -> dict:
     files = sorted(Path(input_dir).glob("NISAR_L2_*GUNW*.h5"))
     if not files:
         raise SystemExit(f"No GUNW .h5 files in {input_dir}")
@@ -32,10 +33,22 @@ def run(input_dir: Path, coh_min: float = config.COH_MIN, min_pairs: int = confi
     if len(tracks) != 1:
         raise SystemExit(f"Found tracks {sorted(tracks)}: process one track per run (different viewing geometry).")
 
-    st = stack_pairs(pairs, coh_min=coh_min, min_pairs=min_pairs)
     p0 = pairs[0]
     simulated = any(p.simulated for p in pairs)
+    locations = json.loads((config.WEB_DATA / "locations.json").read_text())["locations"]
 
+    height = exclude = raw = None
+    if dem:
+        from .dem import circles_mask, height_on_grid
+        height = height_on_grid([Path(d) for d in dem], p0.x, p0.y, p0.epsg)
+        exclude = circles_mask([(l["lon"], l["lat"]) for l in locations], p0.x, p0.y, p0.epsg, exclude_radius_m)
+        raw = stack_pairs(pairs, coh_min=coh_min, min_pairs=min_pairs)            # kept for a before/after view
+    st = stack_pairs(pairs, coh_min=coh_min, min_pairs=min_pairs, height_m=height, exclude=exclude)
+
+    for old in config.RESULTS.glob("los_epoch_*.png"):
+        old.unlink()
+    for old in ("los_cumulative_raw.png", "grid.json"):
+        (config.RESULTS / old).unlink(missing_ok=True)
     config.RESULTS.mkdir(parents=True, exist_ok=True)
     finite = st.cumulative_mm[np.isfinite(st.cumulative_mm)]
     if finite.size == 0:
@@ -48,12 +61,34 @@ def run(input_dir: Path, coh_min: float = config.COH_MIN, min_pairs: int = confi
     raster.write_geotiff(config.RESULTS / "los_sigma_mm.tif", st.sigma_mm, p0.x, p0.y, p0.epsg, tags)
     raster.write_geotiff(config.RESULTS / "n_pairs.tif", st.n_pairs.astype("float32"), p0.x, p0.y, p0.epsg)
     bounds = raster.write_overlay(config.RESULTS / "los_cumulative.png", st.cumulative_mm, p0.x, p0.y, p0.epsg, limit_mm)
+    raw_overlay = None
+    if raw is not None:
+        raster.write_overlay(config.RESULTS / "los_cumulative_raw.png", raw.cumulative_mm, p0.x, p0.y, p0.epsg, limit_mm)
+        raw_overlay = "los_cumulative_raw.png"
 
     layers = {"cumulative_mm": st.cumulative_mm, "sigma_mm": st.sigma_mm,
               "n_pairs": st.n_pairs.astype("float32"), "mean_coherence": st.mean_coherence}
-    locations = json.loads((config.WEB_DATA / "locations.json").read_text())["locations"]
+    if height is not None:
+        layers["height_m"] = height
     samples = {loc["id"]: raster.sample_location(loc["lon"], loc["lat"], p0.x, p0.y, p0.epsg, layers, config.SAMPLE_RADIUS_M)
                for loc in locations}
+
+    # Time series: one map and one value per location for every acquisition date.
+    epochs = []
+    for i, (date, arr) in enumerate(zip(st.epoch_dates, st.epochs_mm)):
+        f = f"los_epoch_{i:02d}.png"
+        raster.write_overlay(config.RESULTS / f, arr, p0.x, p0.y, p0.epsg, limit_mm)
+        epochs.append({"date": date, "file": f})
+        for loc in locations:
+            s = raster.sample_location(loc["lon"], loc["lat"], p0.x, p0.y, p0.epsg, {"cumulative_mm": arr}, config.SAMPLE_RADIUS_M)
+            samples[loc["id"]].setdefault("series", []).append({"date": date, "mm": s.get("cumulative_mm")})
+
+    grid_layers = {"los": st.cumulative_mm, "sigma": st.sigma_mm}
+    if raw is not None:
+        grid_layers["los_raw"] = raw.cumulative_mm
+    if height is not None:
+        grid_layers["height"] = height / 10.0     # stored in tenths, so this keeps metres within int16
+    grid_meta = raster.write_grid(config.RESULTS / "grid.json", grid_layers, p0.x, p0.y, p0.epsg)
 
     info = files[0].name.split("_")
     manifest = {
@@ -73,11 +108,16 @@ def run(input_dir: Path, coh_min: float = config.COH_MIN, min_pairs: int = confi
         "pairs_used": [{"ref": p.ref_date, "sec": p.sec_date, "days": p.baseline_days} for p in sorted(pairs, key=lambda p: p.ref_date)],
         "chain_connected": st.connected,
         "settings": {"coherence_min": coh_min, "min_pairs": min_pairs, "ionosphere_screen_removed": any(p.iono is not None for p in pairs),
-                     "troposphere_correction": "none", "sample_radius_m": config.SAMPLE_RADIUS_M},
+                     "troposphere_correction": "linear phase-elevation fit per pair" if height is not None else "none",
+                     "trend_fit_excludes_m_around_focus_areas": exclude_radius_m if height is not None else None,
+                     "elevation_coeffs_mm_per_km": st.elevation_coeffs or None,
+                     "sample_radius_m": config.SAMPLE_RADIUS_M},
         "stats": {"valid_pixel_fraction": round(float(np.isfinite(st.cumulative_mm).mean()), 3),
                   "p02_mm": round(float(np.nanpercentile(finite, 2)), 1), "p98_mm": round(float(np.nanpercentile(finite, 98)), 1),
                   "median_sigma_mm": round(float(np.nanmedian(st.sigma_mm)), 2)},
-        "overlay": {"file": "los_cumulative.png", "bounds": bounds, "colour_limit_mm": limit_mm},
+        "overlay": {"file": "los_cumulative.png", "raw_file": raw_overlay, "bounds": bounds, "colour_limit_mm": limit_mm},
+        "epochs": epochs,
+        "grid": {"file": "grid.json", **grid_meta, "height_unit": "metres / 10" if height is not None else None},
         "downloads": ["los_cumulative_mm.tif", "los_sigma_mm.tif", "n_pairs.tif"],
         "locations": samples,
         "notes": sorted({n for p in pairs for n in p.notes}),
@@ -85,3 +125,22 @@ def run(input_dir: Path, coh_min: float = config.COH_MIN, min_pairs: int = confi
     }
     (config.RESULTS / "manifest.json").write_text(json.dumps(manifest, indent=1))
     return manifest
+
+
+def grid_from_results() -> dict:
+    """Rebuild grid.json from the published GeoTIFFs (no GUNW files needed)."""
+    import rasterio
+    with rasterio.open(config.RESULTS / "los_cumulative_mm.tif") as src:
+        los = src.read(1)
+        epsg = src.crs.to_epsg()
+        tr = src.transform
+        x = tr.c + tr.a * (np.arange(src.width) + 0.5)
+        y = tr.f + tr.e * (np.arange(src.height) + 0.5)
+    with rasterio.open(config.RESULTS / "los_sigma_mm.tif") as src:
+        sigma = src.read(1)
+    meta = raster.write_grid(config.RESULTS / "grid.json", {"los": los, "sigma": sigma}, x, y, epsg)
+    mpath = config.RESULTS / "manifest.json"
+    m = json.loads(mpath.read_text())
+    m["grid"] = {"file": "grid.json", **meta, "height_unit": None}
+    mpath.write_text(json.dumps(m, indent=1))
+    return m["grid"]

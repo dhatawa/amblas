@@ -35,11 +35,14 @@ def main() -> None:
     s.add_argument("--min-pairs", type=int, default=config.MIN_PAIRS)
     s.add_argument("--limit-mm", type=float, default=None, help="colour scale limit; default: from the data")
     s.add_argument("--note", default=None, help="analyst's reading of the result, shown in the app next to every value")
+    s.add_argument("--dem", type=Path, nargs="+", default=None,
+                   help="DEM GeoTIFF(s) covering the basin: enables the phase-elevation (troposphere) correction")
 
     s = sub.add_parser("simulate", help="write labelled synthetic files to test the chain")
     s.add_argument("--out", type=Path, default=config.ROOT / "data" / "simulated")
 
     sub.add_parser("clear", help="remove published results from the web app")
+    sub.add_parser("grid", help="rebuild the point-value grid for the web app from the published GeoTIFFs")
 
     a = ap.parse_args()
     if a.cmd == "inventory":
@@ -78,14 +81,19 @@ def main() -> None:
             except Exception as exc:  # report and continue with the next file
                 print(f"{f.name}\n  could not read: {exc}")
     elif a.cmd == "process":
-        m = process.run(a.input, a.coh_min, a.min_pairs, a.limit_mm, a.note)
+        m = process.run(a.input, a.coh_min, a.min_pairs, a.limit_mm, a.note, a.dem)
         print(m["label"])
         print(f"track {m['track']} | {m['first_date']} -> {m['last_date']} | {len(m['pairs_used'])} pairs | valid {m['stats']['valid_pixel_fraction']:.0%}")
+        print(f"troposphere: {m['settings']['troposphere_correction']}  coefficients mm/km: {m['settings']['elevation_coeffs_mm_per_km']}")
         for k, v in m["locations"].items():
-            print(f"  {k:<12} {v}")
+            series = " ".join(f"{s['mm']:+.1f}" if s["mm"] is not None else "nan" for s in v.get("series", []))
+            print(f"  {k:<12} total {v.get('cumulative_mm')} +- {v.get('sigma_mm')} mm | series: {series}")
     elif a.cmd == "simulate":
         for p in simulate.write_files(a.out):
             print("wrote", p.name)
+    elif a.cmd == "grid":
+        g = process.grid_from_results()
+        print(f"grid.json {g['rows']}x{g['cols']} cells")
     elif a.cmd == "clear":
         process.clear()
         print("results cleared")

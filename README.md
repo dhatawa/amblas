@@ -63,12 +63,18 @@ python -m amblas inventory
    ```bash
    python -m amblas subset --input ../data/gunw/track_082 --out ../data/gunw_subset/track_082
    ```
-5. Process and publish to the app.
+5. Process and publish to the app. With a DEM, each pair also gets a phase-versus-elevation (troposphere) correction, and the app shows a before/after switch.
    ```bash
-   python -m amblas process --input ../data/gunw/track_082
+   python -m amblas process --input ../data/gunw/track_082 --dem ../data/dem/*.tif
    ```
+   Free DEM tiles for the basin (Copernicus GLO-30, no login):
+   - https://copernicus-dem-30m.s3.amazonaws.com/Copernicus_DSM_COG_10_S07_00_E107_00_DEM/Copernicus_DSM_COG_10_S07_00_E107_00_DEM.tif
+   - https://copernicus-dem-30m.s3.amazonaws.com/Copernicus_DSM_COG_10_S08_00_E107_00_DEM/Copernicus_DSM_COG_10_S08_00_E107_00_DEM.tif
 
-If `fetch` fails, download the granules by hand from https://search.asf.alaska.edu (dataset NISAR, product GUNW, draw a box over Bandung), put them in one folder per track and run step 4.
+   Every run also writes one map per acquisition date (date slider and per-location charts in the app) and `grid.json`, which lets the app show the value at any clicked point. Results include PNGs that `.gitignore` skips: publish with `git add -f web/data/results`.
+6. Already have results but no `grid.json`? `python -m amblas grid` rebuilds it from the published GeoTIFFs.
+
+If `fetch` fails, download the granules by hand from https://search.asf.alaska.edu (dataset NISAR, product GUNW, draw a box over Bandung), put them in one folder per track and run step 5.
 
 ## Architecture
 

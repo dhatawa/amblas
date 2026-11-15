@@ -92,6 +92,42 @@ def test_footprint_check(sim_dir):
     assert not footprint(sorted(sim_dir.glob("*.h5"))[0], far)["overlaps_aoi"]
 
 
+def test_elevation_trend_removed_but_excluded_patch_kept():
+    rng = np.random.default_rng(1)
+    h = rng.uniform(600, 2200, (200, 200))
+    patch = np.zeros(h.shape, bool)
+    patch[80:120, 80:120] = True
+    d = 12.0 * h / 1000.0 + np.where(patch, -20.0, 0.0) + 7.0
+    out, b = insar.remove_elevation_trend(d, np.ones(h.shape, bool), h, exclude=patch)
+    assert b == pytest.approx(12.0, abs=1e-6)
+    assert np.allclose(out[~patch], 0.0, atol=1e-6) and np.allclose(out[patch], -20.0, atol=1e-6)
+    flat = np.full(h.shape, 700.0)
+    assert insar.remove_elevation_trend(d, np.ones(h.shape, bool), flat)[1] is None   # no relief: no fit
+
+
+def test_series_and_grid_published(sim_dir, monkeypatch, tmp_path):
+    import base64
+    import rasterio
+    from rasterio.transform import from_origin
+    monkeypatch.setattr(config, "RESULTS", tmp_path / "results")
+    dem = tmp_path / "dem.tif"
+    with rasterio.open(dem, "w", driver="GTiff", height=60, width=90, count=1, dtype="float32",
+                       crs="EPSG:4326", transform=from_origin(107.2, -6.6, 0.01, 0.01)) as dst:
+        dst.write(np.tile(np.linspace(600, 2000, 90, dtype="float32"), (60, 1)), 1)
+    m = process.run(sim_dir, dem=[dem])
+    assert [e["date"] for e in m["epochs"]][0] == "2026-06-19" and len(m["epochs"]) == 6
+    assert all((tmp_path / "results" / e["file"]).exists() for e in m["epochs"])
+    s = m["locations"]["gedebage"]["series"]
+    assert s[0]["mm"] == 0.0 and len(s) == 6
+    assert m["settings"]["troposphere_correction"].startswith("linear") and len(m["settings"]["elevation_coeffs_mm_per_km"]) == 5
+    assert m["overlay"]["raw_file"] == "los_cumulative_raw.png"
+    g = json.loads((tmp_path / "results" / "grid.json").read_text())
+    vals = np.frombuffer(base64.b64decode(g["layers"]["los"]), "<i2")
+    assert vals.size == g["rows"] * g["cols"] and set(g["layers"]) == {"los", "sigma", "los_raw", "height"}
+    patch_val = simulate.PATCH_MM_PER_DAY * m["span_days"]
+    assert vals[vals != -32768].min() * 0.1 < patch_val / 2       # the test patch survives in the grid
+
+
 def test_mixed_tracks_are_refused(sim_dir, tmp_path, monkeypatch):
     monkeypatch.setattr(config, "RESULTS", tmp_path / "r")
     d = tmp_path / "mixed"

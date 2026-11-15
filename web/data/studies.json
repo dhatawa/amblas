@@ -71,11 +71,11 @@
    "doi": "10.1016/j.rse.2012.10.015",
    "area": "Nine Indonesian cities including Bandung",
    "satellites": "ALOS PALSAR (L-band)",
-   "period": "2006-2009 (to confirm)",
-   "method": "Time-series InSAR",
-   "reported": "Regional survey that includes Bandung among rapidly subsiding cities.",
-   "limitations": "Regional scale. Later work argues it is too coarse for local management.",
-   "check": "title only; volume, pages, DOI and period entered from memory and still to be confirmed"
+   "period": "2007-2009",
+   "method": "Time-series InSAR from over 900 ALOS images on 33 ascending tracks",
+   "reported": "Significant subsidence in nine areas including Bandung, at rates up to 22 cm/yr across all sites. For Bandung: maximum vertical rate 22.5 cm/yr and average 7.2 cm/yr (Table 2); the paper also cites GPS surveys (2000-2010) showing 8-23 cm/yr.",
+   "limitations": "Regional survey of many cities at once; later work argues local studies need finer processing and ground data.",
+   "check": "abstract, author-hosted full text and Crossref record (volume, pages, DOI)"
   }
  ]
 }

@@ -1,12 +1,69 @@
 // The interactive map and the location panel.
-import { esc, fmtDate, inRing, interpret } from "./util.js";
+import { esc, fmtDate, inRing, interpret, NOISE_FLOOR_MM } from "./util.js";
 
-let map, state, layers = {}, markers = {}, pin;
+let map, state, layers = {}, markers = {}, pin, grid = null, view = { epoch: null, raw: false };
 const $ = (id) => document.getElementById(id);
 
 const coverage = (lon, lat) => state.footprints.features
   .filter((f) => inRing(lon, lat, f.geometry.coordinates[0]))
   .map((f) => `${f.properties.track} ${f.properties.direction}`);
+
+// Point values come from grid.json: int16 tenths of a unit, lat/lon cells.
+async function loadGrid(m) {
+  if (!m.grid) return null;
+  try {
+    const g = await (await fetch(`data/results/${m.grid.file}?v=${encodeURIComponent(m.generated_utc)}`)).json();
+    const layers = {};
+    for (const [k, b64] of Object.entries(g.layers)) {
+      const bin = atob(b64), buf = new ArrayBuffer(bin.length), u8 = new Uint8Array(buf);
+      for (let i = 0; i < bin.length; i++) u8[i] = bin.charCodeAt(i);
+      layers[k] = new Int16Array(buf);
+    }
+    return { ...g, layers };
+  } catch { return null; }
+}
+
+// Median of the valid cells in a 3x3 window around the point (about 500 m).
+function gridValue(lat, lon, key) {
+  if (!grid || !grid.layers[key]) return undefined;
+  const [[s, w], [n, e]] = grid.bounds;
+  if (lat < s || lat > n || lon < w || lon > e) return undefined;
+  const r = Math.floor(((n - lat) / (n - s)) * grid.rows), c = Math.floor(((lon - w) / (e - w)) * grid.cols);
+  const vals = [];
+  for (let dr = -1; dr <= 1; dr++) for (let dc = -1; dc <= 1; dc++) {
+    const rr = r + dr, cc = c + dc;
+    if (rr < 0 || cc < 0 || rr >= grid.rows || cc >= grid.cols) continue;
+    const v = grid.layers[key][rr * grid.cols + cc];
+    if (v !== grid.nodata) vals.push(v * grid.scale);
+  }
+  if (!vals.length) return null;
+  vals.sort((a, b) => a - b);
+  return vals[Math.floor(vals.length / 2)];
+}
+
+// Small line chart of a location's running LOS change, with the noise band.
+function chart(series, noise) {
+  const pts = series.filter((p) => p.mm != null);
+  if (pts.length < 2) return "";
+  const W = 300, H = 120, L = 34, R = 8, T = 8, B = 22;
+  const t0 = Date.parse(series[0].date), t1 = Date.parse(series[series.length - 1].date);
+  const lim = Math.max(noise * 1.5, ...pts.map((p) => Math.abs(p.mm))) * 1.1;
+  const X = (d) => L + ((Date.parse(d) - t0) / (t1 - t0 || 1)) * (W - L - R);
+  const Y = (v) => T + ((lim - v) / (2 * lim)) * (H - T - B);
+  const line = pts.map((p) => `${X(p.date).toFixed(1)},${Y(p.mm).toFixed(1)}`).join(" ");
+  const ticks = series.map((p) => `<text x="${X(p.date)}" y="${H - 6}" text-anchor="middle">${new Date(p.date + "T00:00:00Z").toLocaleDateString("en-GB", { day: "numeric", month: "short", timeZone: "UTC" })}</text>`).join("");
+  return `<svg class="chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="Running line-of-sight change by date">
+    <rect x="${L}" y="${Y(noise)}" width="${W - L - R}" height="${Y(-noise) - Y(noise)}" fill="rgba(157,176,194,.12)"/>
+    <line x1="${L}" x2="${W - R}" y1="${Y(0)}" y2="${Y(0)}" stroke="#26384b"/>
+    <text x="${L - 4}" y="${Y(noise) + 3}" text-anchor="end">+${noise}</text><text x="${L - 4}" y="${Y(-noise) + 3}" text-anchor="end">-${noise}</text>
+    <polyline points="${line}" fill="none" stroke="#3fd0e0" stroke-width="2"/>
+    ${pts.map((p) => `<circle cx="${X(p.date)}" cy="${Y(p.mm)}" r="3" fill="#3fd0e0"><title>${p.date}: ${p.mm.toFixed(1)} mm</title></circle>`).join("")}
+    ${ticks}</svg>`;
+}
+
+function whyBlock(read) {
+  return read.note ? `<details class="why"><summary>Why the map reads as atmosphere</summary><p>${esc(read.note)}</p></details>` : "";
+}
 
 function sourceLine(m) {
   if (m.status === "none") return "None loaded";
@@ -24,7 +81,9 @@ function valueBlock(m, smp) {
   <dt>Valid pixels</dt><dd>${Math.round(smp.valid_fraction * 100)}% within ${m.settings.sample_radius_m} m</dd>
   <dt>Pairs used</dt><dd>${smp.n_pairs} of ${m.pairs_used.length}</dd>
   <dt>Mean coherence</dt><dd>${smp.mean_coherence}</dd>
-  <dt>Local spread</dt><dd>${smp.spread_mm} mm</dd></dl>`;
+  <dt>Local spread</dt><dd>${smp.spread_mm} mm</dd>
+  ${smp.height_m != null ? `<dt>Elevation</dt><dd>${Math.round(smp.height_m)} m</dd>` : ""}</dl>
+  ${smp.series ? `<h3>Change through time</h3>${chart(smp.series, NOISE_FLOOR_MM)}<p><small>Running sum of the 12-day pairs at this place. The shaded band is the &plusmn;${NOISE_FLOOR_MM} mm noise threshold.</small></p>` : ""}`;
 }
 
 function showLocation(loc) {
@@ -37,7 +96,7 @@ function showLocation(loc) {
     <dt>Observation period</dt><dd>${period}</dd><dt>Data source</dt><dd>${sourceLine(m)}</dd>
     <dt>NISAR tracks overhead</dt><dd>${coverage(loc.lon, loc.lat).join(", ") || "none"}</dd></dl>
     <h3>AMBLAS displacement</h3>${valueBlock(m, smp)}
-    <h3>Interpretation</h3><p><b>${esc(read.headline)}.</b> ${esc(read.text)}</p>
+    <h3>Interpretation</h3><p><b>${esc(read.headline)}.</b> ${esc(read.text)}</p>${whyBlock(read)}
     <h3>Earlier research</h3><p>${esc(loc.literature)}</p>
     ${studies.map((t) => `<p><small>${esc(t.authors.split(",")[0])} et al. ${t.year}, ${esc(t.period)}. <a href="https://doi.org/${esc(t.doi)}" rel="noopener">doi:${esc(t.doi)}</a></small></p>`).join("")}
     <h3>Limits for this place</h3><p>${esc(state.locations.shared_caveat)}</p><p>${esc(state.locations.coordinate_note)}</p>`;
@@ -49,9 +108,24 @@ function showPoint(lat, lon) {
   if (pin) pin.remove();
   pin = L.marker([lat, lon], { icon: L.divIcon({ className: "pin", iconSize: [14, 14] }), keyboard: false }).addTo(map);
   Object.values(markers).forEach((mk) => mk.getElement()?.classList.remove("on"));
+  const m = state.manifest, los = gridValue(lat, lon, "los"), sig = gridValue(lat, lon, "sigma"), h = gridValue(lat, lon, "height");
+  const raw = gridValue(lat, lon, "los_raw");
+  let body;
+  if (m.status === "none") body = `<p class="value empty">No displacement layer has been processed yet.</p>`;
+  else if (los === undefined) body = `<p class="value empty">${grid ? "Outside the processed area." : "Point values are not available for this result."}</p>`;
+  else if (los === null) body = `<p class="value empty">No reliable pixels here (low coherence: water, paddy fields or dense vegetation).</p>`;
+  else {
+    const read = interpret(m, { in_raster: true, cumulative_mm: los, sigma_mm: sig ?? 0 });
+    body = `<p class="value">${los > 0 ? "+" : ""}${los.toFixed(1)} <small>${sig != null ? `&plusmn; ${sig.toFixed(1)} ` : ""}mm LOS${m.status === "simulated" ? " SIMULATED" : ""}</small></p>
+      <dl class="kv"><dt>Period</dt><dd>${fmtDate(m.first_date)} to ${fmtDate(m.last_date)}</dd>
+      ${h != null ? `<dt>Elevation</dt><dd>${Math.round(h * 10)} m</dd>` : ""}
+      ${raw != null ? `<dt>Before correction</dt><dd>${raw > 0 ? "+" : ""}${raw.toFixed(1)} mm</dd>` : ""}
+      <dt>Cell</dt><dd>median of about 500 m around the point</dd></dl>
+      <h3>Interpretation</h3><p><b>${esc(read.headline)}.</b> ${esc(read.text)}</p>${whyBlock(read)}`;
+  }
   $("panel").innerHTML = `<h2>Selected point</h2>
     <dl class="kv"><dt>Coordinates</dt><dd>${lat.toFixed(4)}, ${lon.toFixed(4)}</dd><dt>NISAR tracks overhead</dt><dd>${cov.join(", ") || "none in the inventory"}</dd></dl>
-    <p>Values are summarised for the four focus areas only. For any other point, open the GeoTIFF in QGIS.</p>${defaultHint()}`;
+    <h3>AMBLAS displacement</h3>${body}${defaultHint()}`;
 }
 
 function defaultHint() {
@@ -61,10 +135,16 @@ function defaultHint() {
 function intro() {
   const m = state.manifest;
   const dl = m.status === "nisar" ? `<h3>Downloads</h3><p>${m.downloads.map((f) => `<a href="data/results/${f}" download>${f}</a>`).join("<br>")}</p>` : "";
-  $("panel").innerHTML = `<h2>Bandung Basin</h2><p>Select a focus area or click anywhere on the map.</p>
+  const tips = m.status === "none" ? "" : `<ul style="padding-left:1.1rem;margin:.2rem 0 .8rem">
+      <li>Click anywhere to read the value at that point.</li>
+      <li>Pick a focus area for its time series and earlier research.</li>
+      ${m.epochs?.length > 1 ? "<li>Drag the date slider, or press Play, to watch the change build up pass by pass.</li>" : ""}
+      ${m.overlay.raw_file ? "<li>Switch between uncorrected and corrected to see what the atmosphere correction removes.</li>" : ""}</ul>`;
+  $("panel").innerHTML = `<h2>Bandung Basin</h2>${tips}
     <dl class="kv"><dt>Displacement layer</dt><dd>${sourceLine(m)}</dd>
     ${m.status !== "none" ? `<dt>Window</dt><dd>${fmtDate(m.first_date)} to ${fmtDate(m.last_date)}</dd><dt>Reference</dt><dd>${esc(m.reference)}</dd><dt>Valid pixels</dt><dd>${Math.round(m.stats.valid_pixel_fraction * 100)}%</dd>` : ""}</dl>
     ${m.status === "none" ? `<p>The displacement layer is empty on purpose. AMBLAS shows no pattern until real NISAR interferograms have been processed.</p>` : ""}
+    ${whyBlock(interpret(m, { in_raster: true, cumulative_mm: 0, sigma_mm: 0 }))}
     ${defaultHint()}${dl}`;
 }
 
@@ -73,9 +153,66 @@ function legend() {
   if (m.status === "none") { $("legend").innerHTML = "No displacement layer loaded."; $("rasterstate").textContent = "(none)"; return; }
   const lim = m.overlay.colour_limit_mm;
   $("rasterstate").textContent = m.status === "simulated" ? "(simulated)" : "(NISAR)";
-  $("legend").innerHTML = `LOS change, mm, ${fmtDate(m.first_date)} to ${fmtDate(m.last_date)}
+  const until = view.epoch != null && m.epochs ? m.epochs[view.epoch].date : m.last_date;
+  $("legend").innerHTML = `LOS change, mm, ${fmtDate(m.first_date)} to ${fmtDate(until)}${view.raw ? " (uncorrected)" : ""}
     <div class="bar"></div><div class="ends"><span>-${lim}</span><span>0</span><span>+${lim}</span></div>
     <div class="dir"><span>away from satellite</span><span>toward</span></div>`;
+}
+
+function overlayUrl() {
+  const m = state.manifest;
+  let f = m.overlay.file;
+  if (view.raw && m.overlay.raw_file) f = m.overlay.raw_file;
+  else if (view.epoch != null && m.epochs && view.epoch < m.epochs.length - 1) f = m.epochs[view.epoch].file;
+  return `data/results/${f}?v=${encodeURIComponent(m.generated_utc)}`;
+}
+
+function redraw() {
+  layers.raster?.setUrl(overlayUrl());
+  legend();
+}
+
+function timeControls(m) {
+  if (m.overlay.raw_file) {
+    $("before").hidden = false;
+    $("before").innerHTML = `<div class="seg" role="group" aria-label="Atmosphere correction"><button aria-pressed="false" data-raw="1">Uncorrected</button><button aria-pressed="true" data-raw="0">Corrected</button></div>`;
+    $("before").addEventListener("click", (e) => {
+      const b = e.target.closest("button"); if (!b) return;
+      view.raw = b.dataset.raw === "1";
+      if (view.raw) setEpoch(m.epochs.length - 1, false);
+      $("before").querySelectorAll("button").forEach((x) => x.setAttribute("aria-pressed", String(x === b)));
+      redraw();
+    });
+  }
+  if (!m.epochs || m.epochs.length < 2) return;
+  const last = m.epochs.length - 1;
+  $("timebox").hidden = false;
+  $("timebox").innerHTML = `<div class="row"><button id="play" aria-label="Play through the dates">Play</button>
+    <input type="range" id="epoch" min="0" max="${last}" value="${last}" step="1" aria-label="Date"></div>
+    <div class="when" id="when"></div>`;
+  let timer = null;
+  const stop = () => { clearInterval(timer); timer = null; $("play").textContent = "Play"; };
+  $("epoch").addEventListener("input", (e) => { stop(); setEpoch(+e.target.value); });
+  $("play").addEventListener("click", () => {
+    if (timer) return stop();
+    $("play").textContent = "Pause";
+    let i = view.epoch >= last ? 0 : view.epoch + 1;
+    setEpoch(i);
+    timer = setInterval(() => { i += 1; if (i > last) return stop(); setEpoch(i); }, 1100);
+  });
+  setEpoch(last, false);
+}
+
+function setEpoch(i, draw = true) {
+  const m = state.manifest;
+  view.epoch = i;
+  if ($("epoch")) $("epoch").value = i;
+  if ($("when")) $("when").textContent = i === 0 ? `${fmtDate(m.epochs[0].date)}: reference pass (zero)` : `${fmtDate(m.epochs[0].date)} to ${fmtDate(m.epochs[i].date)}, ${i} of ${m.epochs.length - 1} pairs`;
+  if (draw && view.raw && i < m.epochs.length - 1) {
+    view.raw = false;
+    $("before").querySelectorAll("button").forEach((x) => x.setAttribute("aria-pressed", String(x.dataset.raw === "0")));
+  }
+  if (draw) redraw();
 }
 
 // Coordinate grid drawn only when the basemap cannot load, so an offline demo
@@ -100,7 +237,8 @@ export function init(s) {
   map = L.map("map", { zoomControl: false, minZoom: 7, maxZoom: 16 });
   L.control.zoom({ position: "topright" }).addTo(map);
   map.fitBounds([[a.south, a.west], [a.north, a.east]], { paddingTopLeft: [wide ? 280 : 10, 10], paddingBottomRight: [10, 10] });
-  const tiles = L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", { maxZoom: 19, attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors' }).addTo(map);
+  const tiles = L.tileLayer("https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png", { maxZoom: 19, subdomains: "abcd",
+    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>' }).addTo(map);
   let failed = 0;
   tiles.on("tileerror", () => { if (++failed === 3) { $("offline").hidden = false; graticule().addTo(map); } });
   L.control.scale({ imperial: false }).addTo(map);
@@ -143,8 +281,10 @@ export function init(s) {
     else if (c && Math.abs(+c[1]) <= 90 && Math.abs(+c[2]) <= 180) { map.setView([+c[1], +c[2]], 13); showPoint(+c[1], +c[2]); }
     else $("panel").innerHTML = `<h2>Not found</h2><p>Search knows the four focus areas and coordinates written as <span class="num">-6.95, 107.70</span>.</p>${defaultHint()}`;
   });
+  timeControls(m);
   legend();
   intro();
+  loadGrid(m).then((g) => { grid = g; });
 }
 
 export function focus(id) {
